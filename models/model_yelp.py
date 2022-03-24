@@ -20,6 +20,8 @@ class ALBEF(nn.Module):
         
         self.tokenizer = tokenizer 
         self.distill = config['distill']
+        self.t_pooling = config['t_pooling']
+        self.fuse_pooling = config['fuse_pooling']
 
         self.visual_encoder = VisionTransformer(
             img_size=config['image_res'], 
@@ -86,81 +88,19 @@ class ALBEF(nn.Module):
             self.momentum = 0.995
          
 
-    def get_t_feat(self, inputs, device):
-        bs = len(inputs)
-        b = []
-        num_max_sent = 0
-        for i in range(bs):
-            sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:20]
-            # print(sents.size())
-            att_mask = torch.ones(sents.shape, dtype=torch.long).to(device)
-            output = self.text_encoder(
-                sents,
-                attention_mask=att_mask,
-                return_dict=True,
-                mode='text'
-            )
-            # sent_feat = output.last_hidden_state.max(dim=0).values
-            sent_feat = output.last_hidden_state[:,0,:]
-            # doc_feat = sent_feat.mean(dim=0)
-            b.append(sent_feat)
-            num_max_sent = max(num_max_sent, sent_feat.size(0))
-        ret = torch.zeros(
-            bs, 
-            num_max_sent, 
-            self.text_encoder.config.hidden_size, 
-            dtype=torch.float
-        ).to(device)
-
-        for i in range(bs):
-            ret[i][:b[i].size(0)] = b[i]
-        return ret
-
-    def get_v_feat(self, inputs, device):
-        bs = inputs.size(0)
-        num_max_img = 0
-        b = []
-        for i in range(bs):
-            img = inputs[i]
-            output = self.visual_encoder(img)
-            img_feat = output[:,0,:]
-            b.append(img_feat)
-            num_max_img = max(num_max_img, img_feat.size(0))
-
-        ret = torch.zeros(
-            bs, 
-            num_max_img,
-            768,
-            dtype=torch.float
-        ).to(device)
-
-        for i in range(bs):
-            ret[i][:b[i].size(0)] = b[i]
-        return ret
-
     def forward(self, image, text, label, device, alpha=0, train=True):
         output_v = self.get_v_feat(image, device)
         output_t = self.get_t_feat(text, device)
-        output_fuse = self.text_encoder(
-            encoder_embeds = output_t,
-            encoder_hidden_states = output_v,
-            mode='fusion',
-            return_dict = True
-        )
-        logit = self.cls_head(output_fuse.last_hidden_state[:,0,:])
+        output_fuse = self.get_fuse_feat(output_t, output_v)
+        logit = self.cls_head(output_fuse)
         if train:
             if self.distill:                
                 with torch.no_grad():
                     self._momentum_update()
                     output_t_m = self.get_t_feat(text, device)
                     output_v_m = self.get_v_feat(image, device)
-                    output_fuse_m = self.text_encoder_m(
-                        encoder_embeds = output_t_m,
-                        encoder_hidden_states = output_v_m,
-                        mode='fusion',
-                        return_dict = True
-                    )
-                    prediction_m = self.cls_head_m(output_fuse_m.last_hidden_state[:,0,:])
+                    output_fuse_m = self.get_fuse_feat(output_t_m, output_v_m)
+                    prediction_m = self.cls_head_m(output_fuse_m)
 
                 loss = (1-alpha)*F.cross_entropy(logit, label) - alpha*torch.sum(
                     F.log_softmax(logit, dim=1)*F.softmax(prediction_m, dim=1),dim=1).mean()
@@ -172,7 +112,6 @@ class ALBEF(nn.Module):
             loss = F.cross_entropy(logit, label)                
             return logit, loss
  
-
 
     @torch.no_grad()    
     def copy_params(self):
@@ -189,4 +128,82 @@ class ALBEF(nn.Module):
                 param_m.data = param_m.data * self.momentum + param.data * (1. - self.momentum)
                 
 
+    @staticmethod
+    def pooling(output, method):
+        hidden_states = output.hidden_states
+        if method == 'last_avg':
+            return output.last_hidden_state.mean(dim=1)
+        elif method == 'last_max':
+            return output.last_hidden_state.max(dim=0).values
+        elif method == 'first_last_avg':
+            return (hidden_states[-1] + hidden_states[1]).mean(dim=1)
+        elif method == 'first_last_max':
+            return (hidden_states[-1] + hidden_states[1]).max(dim=0).values
+        elif method == 'cls':
+            return output.last_hidden_state[:, 0, :]
+        else:
+            raise Exception("unknown pooling {}".format(method))
 
+
+    def get_t_feat(self, inputs, device):
+        bs = len(inputs)
+        b = []
+        num_max_sent = 0
+        for i in range(bs):
+            sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:20]
+            # print(sents.size())
+            att_mask = torch.ones(sents.shape, dtype=torch.long).to(device)
+            output = self.text_encoder(
+                sents,
+                attention_mask=att_mask,
+                return_dict=True,
+                mode='text',
+                output_hidden_states=True,
+            )
+            sent_feat = ALBEF.pooling(output, self.t_pooling)
+            b.append(sent_feat)
+            num_max_sent = max(num_max_sent, sent_feat.size(0))
+        ret = torch.zeros(
+            bs, 
+            num_max_sent, 
+            self.text_encoder.config.hidden_size, 
+            dtype=torch.float
+        ).to(device)
+
+        for i in range(bs):
+            ret[i][:b[i].size(0)] = b[i]
+        return ret
+    
+
+    def get_v_feat(self, inputs, device):
+        bs = inputs.size(0)
+        num_max_img = 0
+        b = []
+        for i in range(bs):
+            img = inputs[i]
+            output = self.visual_encoder(img)
+            # pooling
+            img_feat = output[:,0,:]
+            b.append(img_feat)
+            num_max_img = max(num_max_img, img_feat.size(0))
+
+        ret = torch.zeros(
+            bs, 
+            num_max_img,
+            768,
+            dtype=torch.float
+        ).to(device)
+
+        for i in range(bs):
+            ret[i][:b[i].size(0)] = b[i]
+        return ret
+
+    def get_fuse_feat(self, output_t, output_v):
+        output_fuse = self.text_encoder(
+            encoder_embeds = output_t,
+            encoder_hidden_states = output_v,
+            mode='fusion',
+            return_dict = True,
+            output_hidden_states=True,
+        )
+        return ALBEF.pooling(output_fuse, self.fuse_pooling)

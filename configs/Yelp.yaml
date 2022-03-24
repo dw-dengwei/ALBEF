@@ -27,11 +27,14 @@ schedular: {
   lr: 1e-5, 
   epochs: 5,
   min_lr: 1e-6, 
-  decay_rate: 0.9, 
+  decay_rate: 0.8, 
   decay_epochs: 1,
   warmup_lr: 1e-6, 
-  warmup_epochs: 0, 
+  warmup_epochs: 1, 
   cooldown_epochs: 0
 }
 
 num_label: 5
+
+t_pooling: 'first_last_avg'
+fuse_pooling: 'last_avg'
