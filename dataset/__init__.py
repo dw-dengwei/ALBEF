@@ -10,6 +10,7 @@ from dataset.vqa_dataset import vqa_dataset
 from dataset.grounding_dataset import grounding_dataset
 from dataset.mvsa_dataset import mvsa_dataset
 from dataset.yelp_dataset import yelp_dataset
+from dataset.zol_dataset import zol_dataset
 
 from dataset.randaugment import RandomAugment
 import os
@@ -79,7 +80,7 @@ def create_dataset(dataset, config):
         train_dataset = grounding_dataset(config['train_file'], train_transform, config['image_root'], mode='train')       
         test_dataset = grounding_dataset(config['test_file'], test_transform, config['image_root'], mode='test')             
         return train_dataset, test_dataset    
-    elif dataset in ['AC', 'Yelp', 'MVSA_demo', 'MVSA', 'MVSA_M', 'MVSA_S']:
+    elif dataset in ['AC', 'Yelp', 'MVSA_demo', 'MVSA', 'MVSA_M', 'MVSA_S', 'ZOL']:
         pretrain_transform = transforms.Compose([                        
             transforms.RandomResizedCrop(config['image_res'],scale=(0.5, 1.0), interpolation=Image.BICUBIC),
             transforms.RandomHorizontalFlip(),
@@ -124,9 +125,18 @@ def create_dataset(dataset, config):
                 config['data_root'], test_transform, 'test', config
             )                
             return train_dataset, val_dataset, test_dataset     
+        elif dataset == 'ZOL':
+            train_dataset = zol_dataset(
+                config['data_root'], train_transform, 'train', config
+            )  
+            val_dataset = zol_dataset(
+                config['data_root'], test_transform, 'val', config
+            )  
+            test_dataset = zol_dataset(
+                config['data_root'], test_transform, 'test', config
+            )                
+            return train_dataset, val_dataset, test_dataset     
 
-
-    
 
 def vqa_collate_fn(batch):
     image_list, question_list, answer_list, weight_list, n = [], [], [], [], []

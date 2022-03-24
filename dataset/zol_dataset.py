@@ -16,14 +16,14 @@ def _load_annotations(annotations_jsonpath):
             entries.append(
                 {
                     "label": annotation["Rating"],
-                    "id": annotation["_id"],
                     "text": annotation["Text"],
                     "photos": annotation["Photos"],
+                    "aspect": annotation["Aspect"]
                 }
             )
     return entries
 
-class yelp_dataset(Dataset):
+class zol_dataset(Dataset):
     def __init__(self, data_root, transform, split, config):
         self.im_root = os.path.join(data_root, 'image')
         datapath = os.path.join(data_root, config[split + '_file'])

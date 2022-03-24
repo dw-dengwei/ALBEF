@@ -3,7 +3,7 @@ import json
 import random
 from PIL import Image
 from torch.utils.data import Dataset
-from dataset.utils import pre_ac, pre_mvsa
+from dataset.utils import pre_yelp, pre_mvsa
 import jsonlines
 import torch
 

@@ -10,31 +10,35 @@ batch_size_train: 8
 batch_size_test: 64 
 
 alpha: 0.4
-distill: False
+distill: True
 warm_up: False
 
-bert_config: 'configs/config_bert.json'
+bert_config: 'configs/config_bert_MVSA_M.json'
 accumulation_steps: 8
 
 optimizer: {
   opt: adamW, 
-  lr: 1e-5, 
+  lr: 2e-5, 
   weight_decay: 0.01
 }
 
 schedular: {
-  sched: step, 
-  lr: 1e-5, 
-  epochs: 5,
+  sched: cosine, 
+  lr: 2e-5, 
+  epochs: 10,
   min_lr: 1e-6, 
   decay_rate: 0.8, 
   decay_epochs: 1,
-  warmup_lr: 1e-6, 
+  warmup_lr: 1e-5, 
   warmup_epochs: 1, 
   cooldown_epochs: 0
 }
 
-num_label: 5
-
-t_pooling: 'last_max'
+num_label: 3
+# last_avg last_max first_last_avg first_last_max cls
+t_pooling: 'first_last_avg'
+v_pooling: 'cls'
 fuse_pooling: 'last_avg'
+vit_depth: 12
+vit_heads: 12
+vit_dropout: 0.0

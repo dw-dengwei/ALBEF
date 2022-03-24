@@ -80,7 +80,7 @@ def train(
                
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
         metric_logger.update(loss=loss.item())
-        metric_logger.update(acc=accuracy.item(), n=label.size(0))
+        metric_logger.meters['acc'].update(accuracy.item(), n=label.size(0))
         
         if epoch==0 and i%step_size==0 and i<=warmup_iterations: 
             scheduler.step(i//step_size)
@@ -99,7 +99,7 @@ def evaluate(model, data_loader, tokenizer, device, config):
     metric_logger = utils.MetricLogger(delimiter="  ")
 
     header = 'Evaluation:'
-    print_freq = 50
+    print_freq = 500
 
     for images, text, targets in metric_logger.log_every(data_loader, print_freq, header):
         
