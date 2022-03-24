@@ -10,7 +10,7 @@ batch_size_train: 8
 batch_size_test: 64 
 
 alpha: 0.4
-distill: True
+distill: False
 warm_up: False
 
 bert_config: 'configs/config_bert.json'
@@ -27,7 +27,7 @@ schedular: {
   lr: 1e-5, 
   epochs: 5,
   min_lr: 1e-6, 
-  decay_rate: 0.8, 
+  decay_rate: 0.9, 
   decay_epochs: 1,
   warmup_lr: 1e-6, 
   warmup_epochs: 0, 
