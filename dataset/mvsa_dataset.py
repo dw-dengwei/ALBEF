@@ -5,6 +5,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 from dataset.utils import pre_ac, pre_mvsa
 import jsonlines
+import torch
 
 def _load_annotations(annotations_jsonpath):
     entries = []
@@ -21,17 +22,10 @@ def _load_annotations(annotations_jsonpath):
     return entries
 
 class mvsa_dataset(Dataset):
-    def __init__(self, data_root, transform, split):
-        self.im_root = os.path.join(
-            data_root,
-            'image'
-        )
-        self._entry = _load_annotations(
-            os.path.join(
-                data_root,
-                split + '.jsonline'
-            )
-        )
+    def __init__(self, data_root, transform, split, config):
+        self.im_root = os.path.join(data_root, 'image')
+        datapath = os.path.join(data_root, config[split + '_file'])
+        self._entry = _load_annotations(datapath)
         self.transform = transform
         
     def __len__(self):
@@ -43,7 +37,7 @@ class mvsa_dataset(Dataset):
         image_path = os.path.join(self.im_root, im_id + '.jpg')  
             
         image = Image.open(image_path).convert('RGB')   
-        image = self.transform(image)          
+        image = self.transform(image).unsqueeze(0)
             
         text = pre_mvsa(self._entry[index]['text'])            
         return image, text, label

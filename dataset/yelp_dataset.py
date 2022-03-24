@@ -24,17 +24,10 @@ def _load_annotations(annotations_jsonpath):
     return entries
 
 class yelp_dataset(Dataset):
-    def __init__(self, data_root, transform, split):
-        self.im_root = os.path.join(
-            data_root,
-            'image'
-        )
-        self._entry = _load_annotations(
-            os.path.join(
-                data_root,
-                split + '.json'
-            )
-        )
+    def __init__(self, data_root, transform, split, config):
+        self.im_root = os.path.join(data_root, 'image')
+        datapath = os.path.join(data_root, config[split + '_file'])
+        self._entry = _load_annotations(datapath)
         self.transform = transform
         
         self._max_num_img = 1
@@ -42,7 +35,7 @@ class yelp_dataset(Dataset):
     def __len__(self):
         return len(self._entry)
     
-    def __getitem__(self, index):    
+    def __getitem__(self, index):
         entry = self._entry[index]
         label = int(entry['label']) - 1
 

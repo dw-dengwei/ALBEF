@@ -79,7 +79,7 @@ def create_dataset(dataset, config):
         train_dataset = grounding_dataset(config['train_file'], train_transform, config['image_root'], mode='train')       
         test_dataset = grounding_dataset(config['test_file'], test_transform, config['image_root'], mode='test')             
         return train_dataset, test_dataset    
-    elif dataset=='AC' or dataset == 'Yelp' or dataset == 'MVSA_demo':
+    elif dataset in ['AC', 'Yelp', 'MVSA_demo', 'MVSA', 'MVSA_M', 'MVSA_S']:
         pretrain_transform = transforms.Compose([                        
             transforms.RandomResizedCrop(config['image_res'],scale=(0.5, 1.0), interpolation=Image.BICUBIC),
             transforms.RandomHorizontalFlip(),
@@ -102,38 +102,26 @@ def create_dataset(dataset, config):
             transforms.ToTensor(),
             normalize,
         ])   
-        if dataset == 'MVSA_demo':
+        if dataset == 'MVSA_S' or dataset == 'MVSA_M':
             train_dataset = mvsa_dataset(
-                config['data_root'],
-                train_transform, 
-                split='train'
+                config['data_root'], train_transform, 'train', config,
             )  
             val_dataset = mvsa_dataset(
-                config['data_root'],
-                test_transform, 
-                split='valid'
+                config['data_root'], test_transform, 'val', config,
             )  
             test_dataset = mvsa_dataset(
-                config['data_root'],
-                test_transform, 
-                split='test'
+                config['data_root'], test_transform, 'test', config
             )                
             return train_dataset, val_dataset, test_dataset     
         elif dataset == 'Yelp':
             train_dataset = yelp_dataset(
-                config['data_root'],
-                train_transform, 
-                split='train'
+                config['data_root'], train_transform, 'train', config
             )  
             val_dataset = yelp_dataset(
-                config['data_root'],
-                test_transform, 
-                split='valid'
+                config['data_root'], test_transform, 'val', config
             )  
             test_dataset = yelp_dataset(
-                config['data_root'],
-                test_transform, 
-                split='test'
+                config['data_root'], test_transform, 'test', config
             )                
             return train_dataset, val_dataset, test_dataset     
 

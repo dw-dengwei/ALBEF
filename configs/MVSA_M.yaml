@@ -1,8 +1,8 @@
-data_root: '/home/docker/project/datasets/yelp'
+data_root: '/home/docker/project/datasets/mvsa_m'
 
-train_file: 'train.json'
-val_file: 'valid.json'                
-test_file: 'test.json'
+train_file: 'train.jsonline'
+val_file: 'valid.jsonline'
+test_file: 'test.jsonline'
 
 
 image_res: 384
