@@ -176,10 +176,13 @@ def main(args, config):
                     state_dict[new_key] = state_dict[key] 
                     del state_dict[key]
                 
-        msg = model.load_state_dict(state_dict,strict=False)
-        if 'amp' in checkpoint.keys():
-            amp.load_state_dict(checkpoint['amp'])
-        print('load checkpoint from %s'%args.checkpoint)
+        try:
+            msg = model.load_state_dict(state_dict,strict=False)
+            if 'amp' in checkpoint.keys():
+                amp.load_state_dict(checkpoint['amp'])
+            print('load checkpoint from %s'%args.checkpoint)
+        except RuntimeError:
+            print('load chechpoints FAILED.')
         # print(msg)
 
     model = model.to(device)   
@@ -286,8 +289,8 @@ if __name__ == '__main__':
 
     args.config = os.path.join('configs', args.dataset + '.yaml')
     args.output_dir = os.path.join('output', args.dataset)
-
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    args.text_encoder = config['bert_tokenizer']
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
         

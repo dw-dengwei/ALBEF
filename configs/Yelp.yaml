@@ -13,28 +13,35 @@ alpha: 0.4
 distill: False
 warm_up: False
 
-bert_config: 'configs/config_bert.json'
+bert_config: 'configs/config_bert_Yelp.json'
 accumulation_steps: 8
 
 optimizer: {
   opt: adamW, 
-  lr: 1e-5, 
+  lr: 2e-5, 
   weight_decay: 0.01
 }
 
 schedular: {
-  sched: step, 
-  lr: 1e-5, 
+  sched: cosine, 
+  lr: 2e-5, 
   epochs: 5,
   min_lr: 1e-6, 
   decay_rate: 0.8, 
   decay_epochs: 1,
-  warmup_lr: 1e-6, 
+  warmup_lr: 1e-5, 
   warmup_epochs: 1, 
   cooldown_epochs: 0
 }
 
 num_label: 5
 
-t_pooling: 'last_max'
+t_pooling: 'first_last_avg'
+v_pooling: 'cls'
 fuse_pooling: 'last_avg'
+vit_depth: 12
+vit_heads: 12
+vit_dropout: 0.5
+num_sents: 20
+
+bert_tokenizer: bert-base-uncased

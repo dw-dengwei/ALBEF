@@ -2,8 +2,9 @@ import os
 import json
 import random
 from PIL import Image
+from importlib_metadata import entry_points
 from torch.utils.data import Dataset
-from dataset.utils import pre_yelp
+from dataset.utils import pre_zol, pre_zol_no_sep
 import jsonlines
 import torch
 import numpy as np
@@ -43,12 +44,8 @@ class zol_dataset(Dataset):
         cnt = 0
         try:
             photos = entry['photos']
-            for im in photos:
-                im_id = im['_id']
-                image_path = os.path.join(
-                    self.im_root,
-                    im_id + '.jpg'
-                )
+            for im_id in photos:
+                image_path = os.path.join(self.im_root, im_id)
                 if os.path.exists(image_path):
                     image = Image.open(image_path).convert('RGB')   
                     image = self.transform(image)
@@ -58,6 +55,8 @@ class zol_dataset(Dataset):
                         break
         except KeyError:
             pass
-
-        text = pre_yelp(self._entry[index]['text'])
+        text = entry['text']
+        # aspect = entry['aspect']
+        # text = aspect + '.' + text
+        text = pre_zol(text)
         return im_s, text, label

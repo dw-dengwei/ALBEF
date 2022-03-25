@@ -1,3 +1,4 @@
+from secrets import token_urlsafe
 from transformers import BertModel, BertTokenizer
 import torch
 from torch import nn
@@ -37,7 +38,7 @@ text2 = \
 # text = text2
 texts = pre_ac(text)
 
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
 bert = BertModel.from_pretrained(
     'bert-base-uncased', 
     config='configs/config_demo.json', 
@@ -55,76 +56,14 @@ cls_head = nn.Sequential(
             )
         )
 
-
-@torch.no_grad()
-def split_words(input_ids):
+text3 = \
     '''
-    input_ids: bs * num_max_words 
+    流畅度高。屏幕感觉还没有g2的感觉好。第一篇原创，如有不足请各位包涵，指正！.        最近一直计划给老婆大人换手机，关注了很久，由于老婆不喜欢用苹果，所以从上一代旗舰的s8和索大法看到最近的一加6和小米MIX2s。最后定下买首发的一加。.       下面简单上几张图片，供大家参考(由于本人对拍照毫无兴趣，照片质量不是很好，大家将就看吧！.内部配件总览.墨岩黑背面单独来一张.开机.手机桌面.先说一下收到后的外观感受吧，墨岩黑的玻璃后壳看上去很有质感，手感也不错。论坛上说边框些割手，从手机背面往前面划的时候，会有割手的感觉，主要是手机背壳和边框不是完全对上的，不知道是装配工艺的问题还是就这样。其他方面还算满意吧。.       然后是屏幕问题，不说和苹果比，我上一个安卓手机是LG G2，感觉还没有g2的感觉好。颗粒感还是比较严重的。话说我还是比较喜欢is屏的感觉。.       手机流畅性还是么有问题的，毕竟845+8G的组合，游戏的话我没有体验，以后有时间再写吧。.       电池在我下午三点收到货的时候剩余电量50左右，下了一些软件，看了半个小时的直播，其余大部分时间是待机，到第二天八点左右剩余30左右的电量。.        关于一加6的上手体验就写这些了，如果有还想了解的问题，可以留言，看到后我会尽量回复的！.
     '''
-    bs = input_ids.size(0)
-    input_ids = input_ids.clone().detach()
-    ret = []
-    for b_id in range(bs):
-        # max_num_words = 0
-        sent = input_ids[b_id][1:]
-        if sent[-1].item() == 0:
-            sent = sent[:(sent==0).nonzero().min().item()]
-        idx = (sent == 102).nonzero().squeeze(1)
-        idx = idx + 1
-        for i in range(1, len(idx)):
-            idx[i] = idx[i] - idx[i - 1]
-        idx = idx.tolist()
-        sents = list(sent.split(idx))
-        for i in range(len(sents)):
-            sents[i] = torch.tensor([101] + sents[i].tolist()).to(input_ids.device)
-            # max_num_words = max(max_num_words, len(sents[i]))
+tokens = tokenizer(text3, padding='longest', return_tensors="np")  
+print(tokens.input_ids)
 
-        # for i in range(len(sents)):
-        #     sents[i] = sents[i] + [0] * (max_num_words - len(sents[i]))
-        ret.append(sents)
-    return ret 
 
-def get_feat(inputs):
-    bs = len(inputs)
-    a = torch.zeros(bert.config.hidden_size)
-    for i in range(bs):
-        sent_num = len(inputs[i])
-        for sent in inputs[i]:
-            att_mask = torch.ones_like(sent).to(sent.device)
-            output = bert(
-                sent.unsqueeze(0),
-                attention_mask=att_mask.unsqueeze(0),
-                return_dict=True,
-                # mode='text'
-            )
-        a = a + output.last_hidden_state[:, 0, :]
-    a = a / sent_num
-    return a
-
-# n = len(texts)
-# a = torch.zeros(bert.config.hidden_size)
-# for text in texts:
-#     tokens = tokenizer(text, truncation=True, return_tensors="pt")
-#     output = bert(
-#         tokens.input_ids,
-#         attention_mask = tokens.attention_mask, 
-#         return_dict = True
-#     )
-#     a = a + output.last_hidden_state[:, 0, :]
-# a = a / n
-# prediction = cls_head(a)
-# _, pred_class = prediction.max(1)
-batch = ['Hello world.[SEP]Hello python and pytorch.', 'Are you happy?']
-tokens = tokenizer(
-    batch, 
-    padding=True, 
-    return_tensors='pt'
-)
-inputs = split_words(tokens.input_ids)
-feat = get_feat(inputs)
-prediction = cls_head(feat)
-_, pred_class = prediction.max(1)
-print(prediction, pred_class)
 # print(tokens.input_ids)
 # print(split_words(tokens.input_ids))
 # 101 [CLS] 102 [SEP]

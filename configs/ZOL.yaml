@@ -1,12 +1,12 @@
 data_root: '/home/docker/project/datasets/zol'
 
-train_file: 'train.jsonline'
-val_file: 'valid.jsonline'
-test_file: 'test.jsonline'
+train_file: 'train_dcxh.jsonline'
+val_file: 'valid_dcxh.jsonline'
+test_file: 'test_dcxh.jsonline'
 
 
 image_res: 384
-batch_size_train: 8
+batch_size_train: 4
 batch_size_test: 64 
 
 alpha: 0.4
@@ -18,27 +18,31 @@ accumulation_steps: 8
 
 optimizer: {
   opt: adamW, 
-  lr: 2e-5, 
+  lr: 2e-6, 
   weight_decay: 0.01
 }
 
 schedular: {
   sched: cosine, 
-  lr: 2e-5, 
-  epochs: 5,
-  min_lr: 1e-6, 
+  lr: 2e-6, 
+  epochs: 20,
+  min_lr: 1e-7, 
   decay_rate: 0.8, 
   decay_epochs: 1,
-  warmup_lr: 1e-5, 
+  warmup_lr: 1e-7, 
   warmup_epochs: 1, 
   cooldown_epochs: 0
 }
 
 num_label: 10
 # last_avg last_max first_last_avg first_last_max cls
-t_pooling: 'first_last_max'
+t_pooling: 'first_last_avg'
 v_pooling: 'cls'
-fuse_pooling: 'cls'
-vit_depth: 12
+fuse_pooling: 'last_avg'
+vit_depth: 10
 vit_heads: 12
 vit_dropout: 0.0
+
+num_sents: 10
+
+bert_tokenizer: bert-base-chinese

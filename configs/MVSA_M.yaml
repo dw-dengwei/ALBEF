@@ -42,3 +42,5 @@ fuse_pooling: 'last_avg'
 vit_depth: 12
 vit_heads: 12
 vit_dropout: 0.0
+num_sents: 20
+bert_tokenizer: bert-base-uncased

@@ -26,6 +26,7 @@ class ALBEF(nn.Module):
         self.vit_depth = config['vit_depth']
         self.vit_heads = config['vit_heads']
         self.vit_dropout = config['vit_dropout']
+        self.config_max_sents = config['num_sents']
 
         self.visual_encoder = VisionTransformer(
             img_size=config['image_res'], 
@@ -137,7 +138,7 @@ class ALBEF(nn.Module):
         b = []
         num_max_sent = 0
         for i in range(bs):
-            sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:20]
+            sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:self.config_max_sents]
             # print(sents.size())
             att_mask = torch.ones(sents.shape, dtype=torch.long).to(device)
             output = encoder(
@@ -188,34 +189,32 @@ class ALBEF(nn.Module):
 
 
     @staticmethod
-    def pooling(output, method):
-        hidden_states = output.hidden_states
+    def pooling(hidden_states, method):
         if method == 'last_avg':
-            return output.last_hidden_state.mean(dim=1)
+            return hidden_states[-1].mean(dim=1)
         elif method == 'last_max':
-            return output.last_hidden_state.max(dim=0).values
+            return hidden_states[-1].max(dim=0).values
         elif method == 'first_last_avg':
             return (hidden_states[-1] + hidden_states[1]).mean(dim=1)
         elif method == 'first_last_max':
             return (hidden_states[-1] + hidden_states[1]).max(dim=0).values
         elif method == 'cls':
-            return output.last_hidden_state[:, 0, :]
+            return hidden_states[-1][:, 0, :]
         else:
             raise Exception("unknown pooling {}".format(method))
 
 
     @staticmethod
-    def v_pooling(output, method):
-        hidden_states = output.hidden_states
+    def v_pooling(hidden_states, method):
         if method == 'last_avg':
-            return output.last_hidden_state.mean(dim=1)
+            return hidden_states[-1].mean(dim=1)
         elif method == 'last_max':
-            return output.last_hidden_state.max(dim=0).values
+            return hidden_states[-1].max(dim=0).values
         elif method == 'first_last_avg':
             return (hidden_states[-1] + hidden_states[1]).mean(dim=1)
         elif method == 'first_last_max':
             return (hidden_states[-1] + hidden_states[1]).max(dim=0).values
         elif method == 'cls':
-            return output.last_hidden_state[:, 0, :]
+            return hidden_states[-1][:, 0, :]
         else:
             raise Exception("unknown pooling {}".format(method))
