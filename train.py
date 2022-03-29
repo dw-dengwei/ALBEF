@@ -252,7 +252,7 @@ def main(args, config):
                         'lr_scheduler': lr_scheduler.state_dict(),
                         'config': config,
                         'epoch': epoch,
-                        'amp': amp.state_dict
+                        'amp': amp.state_dict()
                     }
                     torch.save(save_obj, os.path.join(args.output_dir, 'checkpoint_best.pth')) 
                     best = float(val_stats['acc'])
