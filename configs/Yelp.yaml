@@ -30,7 +30,7 @@ schedular: {
   epochs: 5,
   min_lr: 1e-6, 
   decay_rate: 0.9, 
-  decay_epochs: 1,
+  decay_epochs: 2,
   warmup_lr: 1e-6, 
   warmup_epochs: 0, 
   cooldown_epochs: 0
