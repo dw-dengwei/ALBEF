@@ -39,7 +39,7 @@ schedular: {
 num_label: 5
 
 # last_avg last_max first_last_avg first_last_max cls
-t_pooling: 'cls'
+t_pooling: 'last_avg'
 v_pooling: 'cls'
 fuse_pooling: 'cls'
 vit_depth: 4

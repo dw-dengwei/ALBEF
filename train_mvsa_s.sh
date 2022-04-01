@@ -1,2 +1,2 @@
 #!/bin/bash
-make DATASET=MVSA_S GPUS=1
+make DATASET=MVSA_S GPUS=4

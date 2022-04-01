@@ -23,14 +23,14 @@ optimizer: {
 }
 
 schedular: {
-  sched: cosine, 
+  sched: step, 
   lr: 2e-5, 
   epochs: 10,
   min_lr: 1e-6, 
-  decay_rate: 0.8, 
+  decay_rate: 0.9, 
   decay_epochs: 1,
   warmup_lr: 1e-5, 
-  warmup_epochs: 1, 
+  warmup_epochs: 0, 
   cooldown_epochs: 0
 }
 
@@ -42,5 +42,6 @@ fuse_pooling: 'last_avg'
 vit_depth: 12
 vit_heads: 12
 vit_dropout: 0.0
+
 num_sents: 20
 bert_tokenizer: bert-base-uncased
