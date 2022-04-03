@@ -8,7 +8,7 @@ test_file: 'test.json'
 
 
 image_res: 384
-batch_size_train: 4
+batch_size_train: 40
 batch_size_test: 64 
 
 alpha: 0.4
@@ -27,7 +27,7 @@ optimizer: {
 schedular: {
   sched: step, 
   lr: 1e-5, 
-  epochs: 5,
+  epochs: 10,
   min_lr: 1e-6, 
   decay_rate: 0.9, 
   decay_epochs: 2,
