@@ -26,6 +26,7 @@ class ALBEF(nn.Module):
         self.vit_depth = config['vit_depth']
         self.vit_heads = config['vit_heads']
         self.vit_dropout = config['vit_dropout']
+        self.vit_mlp_ratio = config['vit_mlp_ratio']
         self.config_max_sents = config['num_sents']
 
         self.visual_encoder = VisionTransformer(
@@ -34,7 +35,7 @@ class ALBEF(nn.Module):
             embed_dim=768, 
             depth=self.vit_depth, 
             num_heads=self.vit_heads, 
-            mlp_ratio=4, 
+            mlp_ratio=self.vit_mlp_ratio, 
             qkv_bias=True, 
             norm_layer=partial(nn.LayerNorm, eps=1e-6),
             drop_rate=self.vit_dropout,
@@ -45,13 +46,14 @@ class ALBEF(nn.Module):
         self.text_encoder = BertModel.from_pretrained(text_encoder, config=bert_config, add_pooling_layer=False)
 
         self.mlp = nn.Sequential(
+                  nn.BatchNorm1d(self.text_encoder.config.hidden_size),
+                #   nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
                   nn.Linear(
                     self.text_encoder.config.hidden_size, 
                     self.text_encoder.config.hidden_size
                   ),
                   nn.Dropout(0.5),
                   nn.ReLU(),
-                  nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
                   nn.Linear(
                         self.text_encoder.config.hidden_size, 
                         config['num_label']
@@ -65,20 +67,21 @@ class ALBEF(nn.Module):
                 embed_dim=768, 
                 depth=self.vit_depth, 
                 num_heads=self.vit_heads, 
-                mlp_ratio=4, 
+                mlp_ratio=self.vit_mlp_ratio, 
                 qkv_bias=True, 
                 norm_layer=partial(nn.LayerNorm, eps=1e-6),
                 drop_rate=self.vit_dropout,
             )
             self.text_encoder_m = BertModel.from_pretrained(text_encoder, config=bert_config, add_pooling_layer=False)      
             self.mlp_m = nn.Sequential(
+                    nn.BatchNorm1d(self.text_encoder.config.hidden_size),
+                    # nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
                     nn.Linear(
                         self.text_encoder.config.hidden_size, 
                         self.text_encoder.config.hidden_size
                     ),
                     nn.Dropout(0.5),
                     nn.ReLU(),
-                    nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
                     nn.Linear(
                         self.text_encoder.config.hidden_size, 
                         config['num_label']

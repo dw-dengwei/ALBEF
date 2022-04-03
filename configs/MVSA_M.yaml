@@ -1,12 +1,12 @@
 data_root: '/home/docker/project/datasets/mvsa_m'
 
-train_file: 'train_aug.jsonline'
+train_file: 'train_.jsonline'
 val_file: 'valid_.jsonline'
-test_file: 'valid_2.jsonline'
+test_file: 'test_.jsonline'
 
 
 image_res: 384
-batch_size_train: 40
+batch_size_train: 4
 batch_size_test: 64 
 
 alpha: 0.4
@@ -18,18 +18,18 @@ accumulation_steps: 8
 
 optimizer: {
   opt: adamW, 
-  lr: 1e-4, 
+  lr: 1e-5, 
   weight_decay: 0.01
 }
 
 schedular: {
-  sched: step, 
-  lr: 1e-4, 
+  sched: cosine, 
+  lr: 1e-5, 
   epochs: 40,
-  min_lr: 1e-5, 
+  min_lr: 1e-6,
   decay_rate: 0.9, 
   decay_epochs: 1,
-  warmup_lr: 1e-5, 
+  warmup_lr: 1e-6, 
   warmup_epochs: 0, 
   cooldown_epochs: 0
 }
@@ -41,7 +41,8 @@ v_pooling: 'cls'
 fuse_pooling: 'last_avg'
 vit_depth: 2
 vit_heads: 2
-vit_dropout: 0.5
+vit_dropout: 0.1
+vit_mlp_ratio: 2
 
 num_sents: 20
 bert_tokenizer: bert-base-uncased

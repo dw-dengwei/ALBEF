@@ -16,6 +16,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
+from apex.parallel import convert_syncbn_model
 
 from apex import amp
 import apex
@@ -147,7 +148,7 @@ def main(args, config):
     train_loader, val_loader, test_loader = create_loader(
         datasets,samplers,
         batch_size=[config['batch_size_train']] + [config['batch_size_test']] * 2,
-        num_workers=[0] * 3,
+        num_workers=[4] * 3,
         is_trains=[True,False,False], 
         collate_fns=[None] * 3)
 
@@ -190,7 +191,8 @@ def main(args, config):
     model_without_ddp = model
     arg_opt = utils.AttrDict(config['optimizer'])
     optimizer = create_optimizer(arg_opt, model)
-    model, optimizer = amp.initialize(model, optimizer, opt_level='O1')
+    model = convert_syncbn_model(model)
+    model, optimizer = amp.initialize(model, optimizer, opt_level='O0')
     if args.distributed:
         model = apex.parallel.DistributedDataParallel(model)
         model_without_ddp = model.module    

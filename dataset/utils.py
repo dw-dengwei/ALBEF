@@ -35,8 +35,8 @@ def pre_mvsa(text):
     url_pattern = '(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]'
     text = re.sub(url_pattern, '', text)
     # text = re.sub('[.?!]', '|||', text)
-    tag_pattern = '#[a-zA-Z0-9]*'
-    text = re.sub(tag_pattern, '', text)
+    # tag_pattern = '#[a-zA-Z0-9]*'
+    # text = re.sub(tag_pattern, '', text)
     at_pattern = '@[a-zA-Z0-9]*'
     text = re.sub(at_pattern, '', text)
     # not_ascii_pattern = '[^a-zA-Z0-9|]'
