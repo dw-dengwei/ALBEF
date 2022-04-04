@@ -46,8 +46,8 @@ class ALBEF(nn.Module):
         self.text_encoder = BertModel.from_pretrained(text_encoder, config=bert_config, add_pooling_layer=False)
 
         self.mlp = nn.Sequential(
-                  nn.BatchNorm1d(self.text_encoder.config.hidden_size),
-                #   nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
+                #   nn.BatchNorm1d(self.text_encoder.config.hidden_size),
+                  nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
                   nn.Linear(
                     self.text_encoder.config.hidden_size, 
                     self.text_encoder.config.hidden_size
@@ -74,8 +74,8 @@ class ALBEF(nn.Module):
             )
             self.text_encoder_m = BertModel.from_pretrained(text_encoder, config=bert_config, add_pooling_layer=False)      
             self.mlp_m = nn.Sequential(
-                    nn.BatchNorm1d(self.text_encoder.config.hidden_size),
-                    # nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
+                    # nn.BatchNorm1d(self.text_encoder.config.hidden_size),
+                    nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
                     nn.Linear(
                         self.text_encoder.config.hidden_size, 
                         self.text_encoder.config.hidden_size

@@ -191,7 +191,7 @@ def main(args, config):
     model_without_ddp = model
     arg_opt = utils.AttrDict(config['optimizer'])
     optimizer = create_optimizer(arg_opt, model)
-    model = convert_syncbn_model(model)
+    # model = convert_syncbn_model(model)
     model, optimizer = amp.initialize(model, optimizer, opt_level='O0')
     if args.distributed:
         model = apex.parallel.DistributedDataParallel(model)
