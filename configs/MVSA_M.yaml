@@ -7,10 +7,10 @@ test_file: 'test_.jsonline'
 
 image_res: 384
 batch_size_train: 8
-batch_size_test: 64 
+batch_size_test: 64
 
 alpha: 0.4
-distill: True
+distill: False
 warm_up: False
 
 bert_config: 'configs/config_bert_MVSA_M.json'
@@ -18,18 +18,18 @@ accumulation_steps: 8
 
 optimizer: {
   opt: adamW, 
-  lr: 2e-5, 
+  lr: 1e-6, 
   weight_decay: 0.01
 }
 
 schedular: {
   sched: step, 
-  lr: 2e-5, 
+  lr: 1e-6, 
   epochs: 40,
-  min_lr: 1e-6,
-  decay_rate: 0.9, 
+  min_lr: 1e-7,
+  decay_rate: 0.5, 
   decay_epochs: 1,
-  warmup_lr: 1e-6, 
+  warmup_lr: 1e-7, 
   warmup_epochs: 0, 
   cooldown_epochs: 0
 }
@@ -42,7 +42,8 @@ fuse_pooling: 'cls'
 vit_depth: 12
 vit_heads: 12
 vit_dropout: 0.1
-vit_mlp_ratio: 2
+vit_mlp_ratio: 4
+vit_patch_size: 16
 
 num_sents: 20
 bert_tokenizer: bert-base-uncased

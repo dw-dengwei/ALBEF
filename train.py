@@ -61,8 +61,7 @@ def train(
  
     for i,(images, text, label) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
         images, label = images.to(device,non_blocking=True), label.to(device,non_blocking=True)
-        text_inputs = tokenizer(text, padding='longest', return_tensors="np")
-        text_inputs = utils.split_words(text_inputs.input_ids, device)
+        text_inputs = tokenizer(text, padding='longest', return_tensors="pt").to(device)
         
         if epoch>0 or not config['warm_up']:
             alpha = config['alpha']
@@ -104,10 +103,9 @@ def evaluate(model, data_loader, tokenizer, device, config):
 
     for images, text, targets in metric_logger.log_every(data_loader, print_freq, header):
         
-        images, targets = images.to(device,non_blocking=True), targets.to(device,non_blocking=True)   
+        images, targets = images.to(device,non_blocking=True), targets.to(device,non_blocking=True)
         
-        text_inputs = tokenizer(text, padding='longest', return_tensors="np")  
-        text_inputs = utils.split_words(text_inputs.input_ids, device)
+        text_inputs = tokenizer(text, padding='longest', return_tensors="pt").to(device)
 
         prediction, loss = model(images, text_inputs, device=device, label=targets, train=False)  
  
@@ -177,13 +175,10 @@ def main(args, config):
                     state_dict[new_key] = state_dict[key] 
                     del state_dict[key]
                 
-        try:
-            msg = model.load_state_dict(state_dict,strict=False)
-            if 'amp' in checkpoint.keys():
-                amp.load_state_dict(checkpoint['amp'])
-            print('load checkpoint from %s'%args.checkpoint)
-        except RuntimeError:
-            print('load chechpoints FAILED.')
+        msg = model.load_state_dict(state_dict,strict=False)
+        if 'amp' in checkpoint.keys():
+            amp.load_state_dict(checkpoint['amp'])
+        print('load checkpoint from %s'%args.checkpoint)
         # print(msg)
 
     model = model.to(device)   

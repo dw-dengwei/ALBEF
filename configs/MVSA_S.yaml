@@ -1,47 +1,49 @@
 data_root: '/home/docker/project/datasets/mvsa_s'
 
-train_file: 'train.jsonline'
-val_file: 'valid.jsonline'
-test_file: 'test.jsonline'
+train_file: 'train_aug.jsonline'
+val_file: 'valid_.jsonline'
+test_file: 'test_.jsonline'
 
 
 image_res: 384
 batch_size_train: 8
-batch_size_test: 64 
+batch_size_test: 64
 
 alpha: 0.4
-distill: True
+distill: False
 warm_up: False
 
-bert_config: 'configs/config_bert_MVSA_S.json'
+bert_config: 'configs/config_bert_MVSA_M.json'
 accumulation_steps: 8
 
 optimizer: {
   opt: adamW, 
-  lr: 2e-5, 
+  lr: 1e-5, 
   weight_decay: 0.01
 }
 
 schedular: {
-  sched: cosine, 
-  lr: 2e-5, 
-  epochs: 10,
-  min_lr: 1e-6, 
-  decay_rate: 0.8, 
+  sched: step, 
+  lr: 1e-5, 
+  epochs: 40,
+  min_lr: 1e-6,
+  decay_rate: 0.5, 
   decay_epochs: 1,
-  warmup_lr: 1e-5, 
-  warmup_epochs: 1, 
+  warmup_lr: 1e-6, 
+  warmup_epochs: 0, 
   cooldown_epochs: 0
 }
 
 num_label: 3
 # last_avg last_max first_last_avg first_last_max cls
-t_pooling: 'first_last_avg'
+t_pooling: 'cls'
 v_pooling: 'cls'
-fuse_pooling: 'last_avg'
+fuse_pooling: 'cls'
 vit_depth: 12
 vit_heads: 12
-vit_dropout: 0.0
+vit_dropout: 0.1
+vit_mlp_ratio: 4
+vit_patch_size: 16
 
 num_sents: 20
 bert_tokenizer: bert-base-uncased

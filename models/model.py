@@ -27,11 +27,12 @@ class ALBEF(nn.Module):
         self.vit_heads = config['vit_heads']
         self.vit_dropout = config['vit_dropout']
         self.vit_mlp_ratio = config['vit_mlp_ratio']
+        self.vit_patch_size = config['vit_patch_size']
         self.config_max_sents = config['num_sents']
 
         self.visual_encoder = VisionTransformer(
             img_size=config['image_res'], 
-            patch_size=16, 
+            patch_size=self.vit_patch_size, 
             embed_dim=768, 
             depth=self.vit_depth, 
             num_heads=self.vit_heads, 
@@ -63,7 +64,7 @@ class ALBEF(nn.Module):
         if self.distill:
             self.visual_encoder_m = VisionTransformer(
                 img_size=config['image_res'], 
-                patch_size=16, 
+                patch_size=self.vit_patch_size, 
                 embed_dim=768, 
                 depth=self.vit_depth, 
                 num_heads=self.vit_heads, 
@@ -137,47 +138,22 @@ class ALBEF(nn.Module):
 
 
     def get_t_feat(self, inputs, device, encoder):
-        bs = len(inputs)
-        b = []
-        num_max_sent = 0
-        for i in range(bs):
-            sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:self.config_max_sents]
-            # print(sents.size())
-            att_mask = torch.ones(sents.shape, dtype=torch.long).to(device)
-            output = encoder(
-                sents,
-                attention_mask=att_mask,
-                return_dict=True,
-                mode='text',
-                output_hidden_states=True,
-            )
-            sent_feat = ALBEF.pooling(output, self.t_pooling_met)
-            b.append(sent_feat)
-            num_max_sent = max(num_max_sent, sent_feat.size(0))
-        ret = torch.zeros(
-            bs, 
-            num_max_sent, 
-            self.text_encoder.config.hidden_size, 
-            dtype=torch.float
-        ).to(device)
-
-        for i in range(bs):
-            ret[i][:b[i].size(0)] = b[i]
-        return ret
+        inputs = inputs.input_ids
+        att_mask = torch.ones_like(inputs, dtype=torch.long).to(device)
+        output = encoder(
+            inputs,
+            attention_mask=att_mask,
+            return_dict=True,
+            mode='text',
+            output_hidden_states=True,
+        )
+        return output[-1]
     
 
     def get_v_feat(self, inputs, device, encoder):
-        bs = inputs.size(0)
-        b = []
-        for i in range(bs):
-            img = inputs[i]
-            output = encoder(img)
-            # pooling       #images * #words * feature_size
-            img_feat = output.mean(dim=0)
-            b.append(img_feat)
-
-        ret = torch.stack(b, dim=0).to(device)
-        return ret
+        inputs = inputs.squeeze()
+        output = encoder(inputs)
+        return output
 
 
     def get_fuse_feat(self, output_t, output_v, encoder):
