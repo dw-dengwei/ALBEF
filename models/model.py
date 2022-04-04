@@ -138,22 +138,47 @@ class ALBEF(nn.Module):
 
 
     def get_t_feat(self, inputs, device, encoder):
-        inputs = inputs.input_ids
-        att_mask = torch.ones_like(inputs, dtype=torch.long).to(device)
-        output = encoder(
-            inputs,
-            attention_mask=att_mask,
-            return_dict=True,
-            mode='text',
-            output_hidden_states=True,
-        )
-        return output[-1]
+        bs = len(inputs)
+        b = []
+        num_max_sent = 0
+        for i in range(bs):
+            sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:self.config_max_sents]
+            # print(sents.size())
+            att_mask = torch.ones(sents.shape, dtype=torch.long).to(device)
+            output = encoder(
+                sents,
+                attention_mask=att_mask,
+                return_dict=True,
+                mode='text',
+                output_hidden_states=True,
+            )
+            sent_feat = ALBEF.pooling(output, self.t_pooling_met)
+            b.append(sent_feat)
+            num_max_sent = max(num_max_sent, sent_feat.size(0))
+        ret = torch.zeros(
+            bs, 
+            num_max_sent, 
+            self.text_encoder.config.hidden_size, 
+            dtype=torch.float
+        ).to(device)
+
+        for i in range(bs):
+            ret[i][:b[i].size(0)] = b[i]
+        return ret
     
 
     def get_v_feat(self, inputs, device, encoder):
-        inputs = inputs.squeeze()
-        output = encoder(inputs)
-        return output
+        bs = inputs.size(0)
+        b = []
+        for i in range(bs):
+            img = inputs[i]
+            output = encoder(img)
+            # pooling       #images * #words * feature_size
+            img_feat = output.mean(dim=0)
+            b.append(img_feat)
+
+        ret = torch.stack(b, dim=0).to(device)
+        return ret
 
 
     def get_fuse_feat(self, output_t, output_v, encoder):
