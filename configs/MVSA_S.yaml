@@ -6,14 +6,14 @@ test_file: 'test_.jsonline'
 
 
 image_res: 384
-batch_size_train: 8
+batch_size_train: 64
 batch_size_test: 64
 
 alpha: 0.4
 distill: False
 warm_up: False
 
-bert_config: 'configs/config_bert_MVSA_M.json'
+bert_config: 'configs/config_bert_MVSA_S.json'
 accumulation_steps: 8
 
 optimizer: {
@@ -39,11 +39,16 @@ num_label: 3
 t_pooling: 'cls'
 v_pooling: 'cls'
 fuse_pooling: 'cls'
-vit_depth: 12
-vit_heads: 12
-vit_dropout: 0.1
+vit_depth: 1
+vit_heads: 1
+vit_dropout: 0.99
 vit_mlp_ratio: 4
 vit_patch_size: 16
+
+lstm_hidden_dim_ratio: 4
+lstm_bidir: True
+
+
 
 num_sents: 20
 bert_tokenizer: bert-base-uncased

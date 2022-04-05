@@ -1,4 +1,5 @@
 from functools import partial
+from unicodedata import bidirectional
 
 from numpy import dtype
 from models.vit import VisionTransformer
@@ -9,6 +10,8 @@ from torch import nn
 import torch.nn.functional as F
 
 import numpy as np
+
+from models.van import VAN
 
 class ALBEF(nn.Module):
     def __init__(self,                 
@@ -30,6 +33,9 @@ class ALBEF(nn.Module):
         self.vit_patch_size = config['vit_patch_size']
         self.config_max_sents = config['num_sents']
 
+        self.lstm_hidden_dim_ratio = config['lstm_hidden_dim_ratio']
+        self.lstm_bidir = config['lstm_bidir']
+
         self.visual_encoder = VisionTransformer(
             img_size=config['image_res'], 
             patch_size=self.vit_patch_size, 
@@ -41,10 +47,39 @@ class ALBEF(nn.Module):
             norm_layer=partial(nn.LayerNorm, eps=1e-6),
             drop_rate=self.vit_dropout,
         )    
+        # self.van_encoder = VAN(
+        #     img_size=config['image_res'],
+        #     num_classes=768,
+        # )
 
         bert_config = BertConfig.from_json_file(config['bert_config'])
 
         self.text_encoder = BertModel.from_pretrained(text_encoder, config=bert_config, add_pooling_layer=False)
+
+        # self.t_lstm = nn.LSTM(
+        #     bert_config.hidden_size, 
+        #     bert_config.hidden_size * self.lstm_hidden_dim_ratio,
+        #     batch_first=True,
+        #     bidirectional=self.lstm_bidir,
+        #     )
+        # self.t_map = nn.Sequential(
+        #     nn.Linear(
+        #         bert_config.hidden_size * 
+        #             self.lstm_hidden_dim_ratio * 
+        #             (2 if self.lstm_bidir else 1),
+        #         bert_config.hidden_size * 
+        #             self.lstm_hidden_dim_ratio * 
+        #             (2 if self.lstm_bidir else 1),
+        #     ),
+        #     nn.ReLU(),
+        #     nn.Linear(
+        #         bert_config.hidden_size * 
+        #             self.lstm_hidden_dim_ratio * 
+        #             (2 if self.lstm_bidir else 1),
+        #         bert_config.hidden_size,
+        #     ),
+        #     nn.ReLU(),
+        # )
 
         self.mlp = nn.Sequential(
                 #   nn.BatchNorm1d(self.text_encoder.config.hidden_size),
@@ -146,13 +181,16 @@ class ALBEF(nn.Module):
             return_dict=True,
             mode='text',
             output_hidden_states=True,
-        )
-        return output[-1]
+        )[-1]
+        # output, (h, c) = self.t_lstm(output)
+        # output = self.t_map(output)
+        return output
     
 
     def get_v_feat(self, inputs, device, encoder):
         inputs = inputs.squeeze()
         output = encoder(inputs)
+        # output = self.van_encoder(inputs).unsqueeze(1)
         return output
 
 

@@ -182,6 +182,13 @@ def main(args, config):
         # print(msg)
 
     model = model.to(device)   
+    for name, param in model.named_parameters():
+        if 'text_encoder.encoder.layer' in name:
+            # print(name)
+            layer_no = int(name.split('.')[3])
+            if layer_no in [0, 1, 2, 3, 6, 7, 8, 9]:
+                param.requires_grad = False
+
     
     model_without_ddp = model
     arg_opt = utils.AttrDict(config['optimizer'])
