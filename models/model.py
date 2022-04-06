@@ -139,8 +139,8 @@ class ALBEF(nn.Module):
         num_max_sent = 0
         for i in range(bs):
             sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:self.config_max_sents]
-            # print(sents.size())
             att_mask = torch.ones(sents.shape, dtype=torch.long).to(device)
+            # list of #sents * #words * feature_size
             output = encoder(
                 sents,
                 attention_mask=att_mask,
@@ -167,10 +167,12 @@ class ALBEF(nn.Module):
         bs = inputs.size(0)
         b = []
         for i in range(bs):
+            # #images * #channels * h * w
             img = inputs[i]
+            # #images * #patches * feature_size
             output = encoder(img)
-            # pooling       #images * #words * feature_size
-            img_feat = output.mean(dim=0)
+            # #images * feature_size
+            img_feat = ALBEF.v_pooling(output, self.v_pooling_met)
             b.append(img_feat)
 
         ret = torch.stack(b, dim=0).to(device)
@@ -185,7 +187,8 @@ class ALBEF(nn.Module):
             return_dict = True,
             output_hidden_states=True,
         )
-        return ALBEF.pooling(output_fuse, self.fuse_pooling_met)
+        ret = ALBEF.pooling(output_fuse, self.fuse_pooling_met)
+        return ret
 
 
     @staticmethod
@@ -193,11 +196,11 @@ class ALBEF(nn.Module):
         if method == 'last_avg':
             return hidden_states[-1].mean(dim=1)
         elif method == 'last_max':
-            return hidden_states[-1].max(dim=0).values
+            return hidden_states[-1].max(dim=1).values
         elif method == 'first_last_avg':
             return (hidden_states[-1] + hidden_states[1]).mean(dim=1)
         elif method == 'first_last_max':
-            return (hidden_states[-1] + hidden_states[1]).max(dim=0).values
+            return (hidden_states[-1] + hidden_states[1]).max(dim=1).values
         elif method == 'cls':
             return hidden_states[-1][:, 0, :]
         else:
@@ -207,14 +210,10 @@ class ALBEF(nn.Module):
     @staticmethod
     def v_pooling(hidden_states, method):
         if method == 'last_avg':
-            return hidden_states[-1].mean(dim=1)
+            return hidden_states.mean(dim=0)
         elif method == 'last_max':
-            return hidden_states[-1].max(dim=0).values
-        elif method == 'first_last_avg':
-            return (hidden_states[-1] + hidden_states[1]).mean(dim=1)
-        elif method == 'first_last_max':
-            return (hidden_states[-1] + hidden_states[1]).max(dim=0).values
+            return hidden_states.max(dim=0).values
         elif method == 'cls':
-            return hidden_states[-1][:, 0, :]
+            return hidden_states[:, 0, :]
         else:
             raise Exception("unknown pooling {}".format(method))
