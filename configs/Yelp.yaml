@@ -8,7 +8,7 @@ test_file: 'test.json'
 
 
 image_res: 384
-batch_size_train: 8
+batch_size_train: 16
 batch_size_test: 64 
 
 alpha: 0.4
@@ -39,7 +39,7 @@ schedular: {
 num_label: 5
 
 # last_avg last_max first_last_avg first_last_max cls
-t_pooling: 'last_avg'
+t_pooling: 'cls'
 v_pooling: 'cls'
 fuse_pooling: 'cls'
 vit_depth: 12
