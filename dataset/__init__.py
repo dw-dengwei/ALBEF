@@ -82,8 +82,10 @@ def create_dataset(dataset, config):
         return train_dataset, test_dataset    
     elif dataset in ['AC', 'Yelp', 'MVSA_demo', 'MVSA', 'MVSA_M', 'MVSA_S', 'ZOL']:
         train_transform = transforms.Compose([                        
-            transforms.Resize((config['image_res'],config['image_res']),
-                interpolation=Image.BICUBIC),
+            transforms.RandomResizedCrop(config['image_res'],scale=(0.5, 1.0), interpolation=Image.BICUBIC),
+            transforms.RandomHorizontalFlip(),
+            RandomAugment(2,7,isPIL=True,augs=['Identity','AutoContrast','Equalize','Brightness','Sharpness',
+                                              'ShearX', 'ShearY', 'TranslateX', 'TranslateY', 'Rotate']),     
             transforms.ToTensor(),
             normalize,
         ])  
@@ -92,7 +94,7 @@ def create_dataset(dataset, config):
                 interpolation=Image.BICUBIC),
             transforms.ToTensor(),
             normalize,
-        ])   
+        ])  
         if dataset == 'MVSA_S' or dataset == 'MVSA_M':
             train_dataset = mvsa_dataset(
                 config['data_root'], train_transform, 'train', config,
