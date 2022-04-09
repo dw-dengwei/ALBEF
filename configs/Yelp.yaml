@@ -56,6 +56,9 @@ cnn_kernel_size: 3
 pooling_num_words: 5
 pooling_num_patches: 2
 
+pooling_num_words: 1
+pooling_num_patches: 50
+
 bert_tokenizer: bert-base-uncased
 
 max_image_num: 1

@@ -25,7 +25,7 @@ optimizer: {
 schedular: {
   sched: step, 
   lr: 1e-5, 
-  epochs: 50,
+  epochs: 10,
   min_lr: 1e-6, 
   decay_rate: 0.9, 
   decay_epochs: 2,
@@ -40,16 +40,16 @@ num_label: 3
 t_pooling: 'cls'
 v_pooling: 'last_avg'
 fuse_pooling: 'cls'
-vit_depth: 4
+vit_depth: 12
 vit_heads: 12
-vit_dropout: 0.5
+vit_dropout: 0.1
 num_sents: 20
 
 cnn_kernel_num: 768
 cnn_kernel_size: 1
 
-pooling_num_words: 1
-pooling_num_patches: 3
+pooling_num_words: 10
+pooling_num_patches: 50
 
 bert_tokenizer: bert-base-uncased
 
