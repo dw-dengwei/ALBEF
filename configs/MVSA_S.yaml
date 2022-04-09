@@ -36,7 +36,7 @@ schedular: {
 
 num_label: 3
 
-# last_avg last_max first_last_avg first_last_max cls
+# last_avg last_max first_last_avg first_last_max cls multi
 t_pooling: 'cls'
 v_pooling: 'last_avg'
 fuse_pooling: 'cls'
@@ -48,6 +48,8 @@ num_sents: 20
 cnn_kernel_num: 768
 cnn_kernel_size: 1
 
+pooling_num_words: 1
+pooling_num_patches: 3
 
 bert_tokenizer: bert-base-uncased
 

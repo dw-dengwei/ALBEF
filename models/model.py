@@ -29,6 +29,8 @@ class ALBEF(nn.Module):
         self.kernel_num = config['cnn_kernel_num']
         self.kernel_size = config['cnn_kernel_size']
         self.config_max_sents = config['num_sents']
+        self.pooling_num_words = config['pooling_num_words']
+        self.pooling_num_patches = config['pooling_num_patches']
 
         self.visual_encoder = VisionTransformer(
             img_size=config['image_res'], 
@@ -204,7 +206,7 @@ class ALBEF(nn.Module):
         return ret
 
 
-    def pooling(self, hidden_states, method, num=1, kernel=None):
+    def pooling(self, hidden_states, method, kernel=None):
         if method == 'last_avg':
             return hidden_states[-1].mean(dim=1)
         elif method == 'last_max':
@@ -222,7 +224,7 @@ class ALBEF(nn.Module):
             # print(hidden_states.size())
             return hidden_states
         elif method == 'multi':
-            return hidden_states[-1][:,:num, :]
+            return hidden_states[-1][:,:self.pooling_num_words, :].reshape((-1, 768))
         else:
             raise Exception("unknown pooling {}".format(method))
 
@@ -234,5 +236,7 @@ class ALBEF(nn.Module):
             return hidden_states.max(dim=0).values
         elif method == 'cls':
             return hidden_states[:, 0, :]
+        elif method == 'multi':
+            return hidden_states[:,:self.pooling_num_patches, :].reshape((-1, 768))
         else:
             raise Exception("unknown pooling {}".format(method))
