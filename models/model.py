@@ -26,8 +26,13 @@ class ALBEF(nn.Module):
         self.vit_depth = config['vit_depth']
         self.vit_heads = config['vit_heads']
         self.vit_dropout = config['vit_dropout']
+<<<<<<< HEAD
         self.vit_mlp_ratio = config['vit_mlp_ratio']
         self.vit_patch_size = config['vit_patch_size']
+=======
+        self.kernel_num = config['cnn_kernel_num']
+        self.kernel_size = config['cnn_kernel_size']
+>>>>>>> 7cc7876f43c5aba3db807bc6b00cc06e4d10fc72
         self.config_max_sents = config['num_sents']
 
         self.visual_encoder = VisionTransformer(
@@ -60,6 +65,11 @@ class ALBEF(nn.Module):
                         config['num_label']
                     )
                 )
+        self.kernel = nn.Conv2d(
+            1, 
+            self.kernel_num,
+            (self.kernel_size, bert_config.hidden_size)
+            )
 
         if self.distill:
             self.visual_encoder_m = VisionTransformer(
@@ -88,17 +98,23 @@ class ALBEF(nn.Module):
                         config['num_label']
                     )
             )
+            self.kernel_m = nn.Conv2d(
+                1, 
+                self.kernel_num,
+                (self.kernel_size, bert_config.hidden_size)
+                )
 
             self.model_pairs = [[self.visual_encoder,self.visual_encoder_m],
                                 [self.text_encoder,self.text_encoder_m],
                                 [self.mlp,self.mlp_m],
+                                [self.kernel, self.kernel_m],
                                ]
             self.copy_params()        
             self.momentum = 0.995
          
 
     def forward(self, image, text, label, device, alpha=0, train=True):
-        output_t = self.get_t_feat(text, device, self.text_encoder)
+        output_t = self.get_t_feat(text, device, self.text_encoder, self.kernel)
         output_v = self.get_v_feat(image, device, self.visual_encoder)
         output_fuse = self.get_fuse_feat(output_t, output_v, self.text_encoder)
         logit = self.mlp(output_fuse)
@@ -106,7 +122,7 @@ class ALBEF(nn.Module):
             if self.distill:                
                 with torch.no_grad():
                     self._momentum_update()
-                    output_t_m = self.get_t_feat(text, device, self.text_encoder_m)
+                    output_t_m = self.get_t_feat(text, device, self.text_encoder_m, self.kernel_m)
                     output_v_m = self.get_v_feat(image, device, self.visual_encoder_m)
                     output_fuse_m = self.get_fuse_feat(output_t_m, output_v_m, self.text_encoder_m)
                     prediction_m = self.mlp_m(output_fuse_m)
@@ -137,7 +153,7 @@ class ALBEF(nn.Module):
                 param_m.data = param_m.data * self.momentum + param.data * (1. - self.momentum)
 
 
-    def get_t_feat(self, inputs, device, encoder):
+    def get_t_feat(self, inputs, device, encoder, kernel):
         bs = len(inputs)
         b = []
         num_max_sent = 0
@@ -152,7 +168,7 @@ class ALBEF(nn.Module):
                 mode='text',
                 output_hidden_states=True,
             )
-            sent_feat = ALBEF.pooling(output, self.t_pooling_met)
+            sent_feat = self.pooling(output, self.t_pooling_met, kernel)
             b.append(sent_feat)
             num_max_sent = max(num_max_sent, sent_feat.size(0))
         ret = torch.zeros(
@@ -176,7 +192,7 @@ class ALBEF(nn.Module):
             # #images * #patches * feature_size
             output = encoder(img)
             # #images * feature_size
-            img_feat = ALBEF.v_pooling(output, self.v_pooling_met)
+            img_feat = self.v_pooling(output, self.v_pooling_met)
             b.append(img_feat)
 
         ret = torch.stack(b, dim=0).to(device)
@@ -191,12 +207,11 @@ class ALBEF(nn.Module):
             return_dict = True,
             output_hidden_states=True,
         )
-        ret = ALBEF.pooling(output_fuse, self.fuse_pooling_met)
+        ret = self.pooling(output_fuse, self.fuse_pooling_met)
         return ret
 
 
-    @staticmethod
-    def pooling(hidden_states, method):
+    def pooling(self, hidden_states, method, num=1, kernel=None):
         if method == 'last_avg':
             return hidden_states[-1].mean(dim=1)
         elif method == 'last_max':
@@ -207,12 +222,19 @@ class ALBEF(nn.Module):
             return (hidden_states[-1] + hidden_states[1]).max(dim=1).values
         elif method == 'cls':
             return hidden_states[-1][:, 0, :]
+        elif method == 'cnn':
+            hidden_states = hidden_states[-1].unsqueeze(1)
+            hidden_states = kernel(hidden_states).squeeze(dim=3)
+            hidden_states = hidden_states.max(dim=2).values
+            # print(hidden_states.size())
+            return hidden_states
+        elif method == 'multi':
+            return hidden_states[-1][:,:num, :]
         else:
             raise Exception("unknown pooling {}".format(method))
 
 
-    @staticmethod
-    def v_pooling(hidden_states, method):
+    def v_pooling(self, hidden_states, method):
         if method == 'last_avg':
             return hidden_states.mean(dim=0)
         elif method == 'last_max':

@@ -177,10 +177,13 @@ def main(args, config):
                     state_dict[new_key] = state_dict[key] 
                     del state_dict[key]
                 
-        msg = model.load_state_dict(state_dict,strict=False)
-        if 'amp' in checkpoint.keys():
-            amp.load_state_dict(checkpoint['amp'])
-        print('load checkpoint from %s'%args.checkpoint)
+        try:
+            msg = model.load_state_dict(state_dict,strict=False)
+            # if 'amp' in checkpoint.keys():
+            #     amp.load_state_dict(checkpoint['amp'])
+            print('load checkpoint from %s'%args.checkpoint)
+        except RuntimeError:
+            print('load chechpoints FAILED.')
         # print(msg)
 
     model = model.to(device)   
