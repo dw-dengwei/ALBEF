@@ -6,7 +6,7 @@ test_file: 'test.jsonline'
 
 
 image_res: 384
-batch_size_train: 8
+batch_size_train: 4
 batch_size_test: 64 
 
 alpha: 0.4
@@ -18,30 +18,37 @@ accumulation_steps: 8
 
 optimizer: {
   opt: adamW, 
-  lr: 2e-5, 
+  lr: 1e-5, 
   weight_decay: 0.01
 }
 
 schedular: {
   sched: step, 
-  lr: 2e-5, 
-  epochs: 10,
+  lr: 1e-5, 
+  epochs: 5,
   min_lr: 1e-6, 
   decay_rate: 0.9, 
-  decay_epochs: 1,
-  warmup_lr: 1e-5, 
+  decay_epochs: 2,
+  warmup_lr: 1e-6, 
   warmup_epochs: 0, 
   cooldown_epochs: 0
 }
 
 num_label: 3
-# last_avg last_max first_last_avg first_last_max cls
-t_pooling: 'first_last_avg'
-v_pooling: 'cls'
-fuse_pooling: 'last_avg'
-vit_depth: 12
-vit_heads: 12
-vit_dropout: 0.0
 
+# last_avg last_max first_last_avg first_last_max cls
+t_pooling: 'cls'
+v_pooling: 'last_avg'
+fuse_pooling: 'cls'
+vit_depth: 4
+vit_heads: 12
+vit_dropout: 0.5
 num_sents: 20
+
+cnn_kernel_num: 768
+cnn_kernel_size: 3
+
+
 bert_tokenizer: bert-base-uncased
+
+max_image_num: 1

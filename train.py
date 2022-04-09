@@ -178,8 +178,8 @@ def main(args, config):
                 
         try:
             msg = model.load_state_dict(state_dict,strict=False)
-            if 'amp' in checkpoint.keys():
-                amp.load_state_dict(checkpoint['amp'])
+            # if 'amp' in checkpoint.keys():
+            #     amp.load_state_dict(checkpoint['amp'])
             print('load checkpoint from %s'%args.checkpoint)
         except RuntimeError:
             print('load chechpoints FAILED.')
