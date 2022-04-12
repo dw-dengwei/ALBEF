@@ -4,9 +4,8 @@ train_file: 'train_.jsonline'
 val_file: 'valid_.jsonline'
 test_file: 'test_.jsonline'
 
-
 image_res: 384
-batch_size_train: 4
+batch_size_train: 8
 batch_size_test: 64 
 
 alpha: 0.4
@@ -28,7 +27,7 @@ schedular: {
   epochs: 10,
   min_lr: 1e-6, 
   decay_rate: 0.9, 
-  decay_epochs: 2,
+  decay_epochs: 1,
   warmup_lr: 1e-6, 
   warmup_epochs: 0, 
   cooldown_epochs: 0
@@ -36,7 +35,7 @@ schedular: {
 
 num_label: 3
 
-# last_avg last_max first_last_avg first_last_max cls
+# last_avg last_max first_last_avg first_last_max cls multi
 t_pooling: 'cls'
 v_pooling: 'last_avg'
 fuse_pooling: 'cls'
@@ -49,8 +48,8 @@ cnn_kernel_num: 768
 cnn_kernel_size: 3
 
 
-pooling_num_words: 10
-pooling_num_patches: 50
+pooling_num_words: 40
+pooling_num_patches: 577
 
 
 bert_tokenizer: bert-base-uncased

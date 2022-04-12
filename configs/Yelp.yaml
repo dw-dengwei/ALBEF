@@ -3,9 +3,6 @@ data_root: '/home/docker/project/datasets/yelp'
 train_file: 'train.json'
 val_file: 'valid.json'                
 test_file: 'test.json'
-# test_file: 'test/Chicago_test.json'
-# test_file: 'test/Los Angeles_test.json'
-# test_file: 'test/New York_test.json'
 # test_file: 'test/San Francisco_test.json'
 #Boston_test.json   Chicago_test.json  'Los Angeles_test.json'  'New York_test.json'  'San Francisco_test.json
 
@@ -41,23 +38,21 @@ schedular: {
 
 num_label: 5
 
-# last_avg last_max first_last_avg first_last_max cls multi
-t_pooling: 'multi'
-v_pooling: 'multi'
+# last_avg last_max first_last_avg first_last_max cls
+t_pooling: 'cls'
+v_pooling: 'last_avg'
 fuse_pooling: 'cls'
 vit_depth: 4
 vit_heads: 12
 vit_dropout: 0.5
 num_sents: 20
 
+
 cnn_kernel_num: 768
 cnn_kernel_size: 3
 
-pooling_num_words: 5
-pooling_num_patches: 2
-
-pooling_num_words: 1
-pooling_num_patches: 50
+pooling_num_words: 40
+pooling_num_patches: 577
 
 bert_tokenizer: bert-base-uncased
 
