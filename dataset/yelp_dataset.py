@@ -123,8 +123,8 @@ class yelp_dataset(Dataset):
         
         # 预处理 顺序不能变
         text = self._entry[index]['text']
-        # text = self.clean(text)
-        # text = self.split_long(text)
-        # text = self.remove_short(text)
+        text = self.clean(text)
+        text = self.split_long(text)
+        text = self.remove_short(text)
         text = self.add_sep(text)
         return im_s, text, label
