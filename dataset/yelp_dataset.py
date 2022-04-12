@@ -35,39 +35,63 @@ class yelp_dataset(Dataset):
         
         self._max_num_img = config['max_image_num']
 
+    def judge(self, text):
+        if len(self.clean(text)) <= 1:
+            return 'short'
+        elif len(self.clean(text)) >= 200:
+            return 'long'
+        else:
+            return 'ok'
+
+    def split_long(self, text):
+        ts = text.split('|||')
+        for idx, t in enumerate(ts):
+            j = self.judge(t)
+            if j == 'long':
+                pattern = re.compile('.{100}')
+                ts[idx] = '|||'.join(pattern.findall(text))
+        text = '|||'.join(ts)
+        return text 
+
+    def remove_short(self, text):
+        ts = text.split('|||')
+        ts_temp = ts[:]
+        for idx, t in enumerate(ts):
+            j = self.judge(t)
+            if j == 'short':
+                ts_temp.remove(t)
+        text = '|||'.join(ts_temp)
+        return text
+
     def clean(self, text):
-        text = text.lower()
         url_pattern = '(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]'
         text = re.sub(url_pattern, '', text)
         tag_pattern = '#[a-zA-Z0-9]*'
         text = re.sub(tag_pattern, '', text)
         at_pattern = '@[a-zA-Z0-9]*'
         text = re.sub(at_pattern, '', text)
-        not_ascii_pattern = '[^a-zA-Z0-9]'
+        not_ascii_pattern = '[^a-zA-Z|]'
         text = re.sub(not_ascii_pattern, ' ', text)
         text = re.sub(' +', ' ', text)
         text = text.strip()
         return text
 
-    def pre(self, text):
-        words = nltk.tokenize.word_tokenize(text)
-        words = [w for w in words if w not in stopwords.words('english')]
-        words = [WordNetLemmatizer().lemmatize(w) for w in words]
-        return ' '.join(words)
-
-    def sep(self, text):
-        pattern = re.compile('.{100}')
-        text = '[SEP]'.join(pattern.findall(text))
+    def add_sep(self, text):
+        url_pattern = '(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]'
+        text = re.sub(url_pattern, '', text)
+        # tag_pattern = '#[a-zA-Z0-9]*'
+        # text = re.sub(tag_pattern, '', text)
+        at_pattern = '@[a-zA-Z0-9]*'
+        text = re.sub(at_pattern, '', text)
+        not_ascii_pattern = '[^a-zA-Z0-9|]'
+        text = re.sub(not_ascii_pattern, ' ', text)
+        text = text.replace('|||', '[SEP]')
+        text = re.sub(' +', ' ', text)
+        text = text.strip()
         if text[-5:] != '[SEP]':
             return text + '[SEP]'
         else:
             return text
-
-    def preprocess(self, text):
-        text = self.clean(text)
-        text = self.pre(text)
-        text = self.sep(text)
-        return text
 
     def __len__(self):
         return len(self._entry)
@@ -96,6 +120,11 @@ class yelp_dataset(Dataset):
                         break
         except KeyError:
             pass
-
-        text = pre_yelp(self._entry[index]['text'])
+        
+        # 预处理 顺序不能变
+        text = self._entry[index]['text']
+        # text = self.clean(text)
+        # text = self.split_long(text)
+        # text = self.remove_short(text)
+        text = self.add_sep(text)
         return im_s, text, label
