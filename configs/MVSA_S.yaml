@@ -49,7 +49,7 @@ cnn_kernel_num: 768
 cnn_kernel_size: 1
 
 pooling_num_words: 10
-pooling_num_patches: 50
+pooling_num_patches: 256
 
 bert_tokenizer: bert-base-uncased
 

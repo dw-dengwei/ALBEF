@@ -448,7 +448,8 @@ class BertLayer(nn.Module):
         self.seq_len_dim = 1
         self.attention = BertAttention(config)
 
-        self.has_cross_attention = (layer_num >= config.fusion_layer)
+        self.has_cross_attention = False
+        # self.has_cross_attention = (layer_num >= config.fusion_layer)
         if self.has_cross_attention:           
             self.layer_num = layer_num                
             self.crossattention = BertAttention(config, is_cross_attention=True)
@@ -503,8 +504,14 @@ class BertLayer(nn.Module):
                     encoder_attention_mask,
                     output_attentions=output_attentions,
                 )
+                # print(cross_attention_outputs[0].size(),
+                #       attention_output.size(),
+                #       encoder_hidden_states.size())
+                # output: torch.Size([8, 1, 768]) torch.Size([8, 1, 768]) torch.Size([8, 577, 768])
+
                 attention_output = cross_attention_outputs[0]
-                outputs = outputs + cross_attention_outputs[1:-1]  # add cross attentions if we output attention weights                               
+                # add cross attentions if we output attention weights
+                outputs = outputs + cross_attention_outputs[1:-1]
         layer_output = apply_chunking_to_forward(
             self.feed_forward_chunk, self.chunk_size_feed_forward, self.seq_len_dim, attention_output
         )

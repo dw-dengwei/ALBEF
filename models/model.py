@@ -195,13 +195,20 @@ class ALBEF(nn.Module):
 
 
     def get_fuse_feat(self, output_t, output_v, encoder):
+        input = torch.cat((output_t, output_v), dim=1)
         output_fuse = encoder(
-            encoder_embeds = output_t,
-            encoder_hidden_states = output_v,
+            encoder_embeds = input,
             mode='fusion',
-            return_dict = True,
             output_hidden_states=True,
+            return_dict = True,
         )
+        # output_fuse = encoder(
+        #     encoder_embeds = output_t,
+        #     encoder_hidden_states = output_v,
+        #     mode='fusion',
+        #     return_dict = True,
+        #     output_hidden_states=True,
+        # )
         ret = self.pooling(output_fuse, self.fuse_pooling_met)
         return ret
 
