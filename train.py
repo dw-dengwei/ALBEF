@@ -1,5 +1,6 @@
 import argparse
 import os
+from turtle import textinput
 import ruamel_yaml as yaml
 import numpy as np
 import random
@@ -44,12 +45,13 @@ def train(
     device, 
     scheduler, 
     config, 
-    accumulation_steps):
+    accumulation_steps,
+    iters):
     # train
     model.train()  
     
     metric_logger = utils.MetricLogger(delimiter="  ")
-    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6f}'))
+    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=50, fmt='{value:.6e}'))
     metric_logger.add_meter('loss', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
     metric_logger.add_meter('acc', utils.SmoothedValue(window_size=50, fmt='{value:.4f}'))
 
@@ -82,13 +84,17 @@ def train(
         metric_logger.update(loss=loss.item())
         metric_logger.meters['acc'].update(accuracy.item(), n=label.size(0))
         
-        if epoch==0 and i%step_size==0 and i<=warmup_iterations: 
-            scheduler.step(i//step_size)
+        # if epoch==0 and i%step_size==0 and i<=warmup_iterations: 
+            # scheduler.step(i//step_size)
+        scheduler.step(iters)
+        iters += 1
         
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger.global_avg())     
-    return {k: "{:.4f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()}    
+    return {
+        k: "{:.4f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()
+    }, iters
 
 
 @torch.no_grad()
@@ -147,7 +153,7 @@ def main(args, config):
     train_loader, val_loader, test_loader = create_loader(
         datasets,samplers,
         batch_size=[config['batch_size_train']] + [config['batch_size_test']] * 2,
-        num_workers=[0] * 3,
+        num_workers=[4] * 3,
         is_trains=[True,False,False], 
         collate_fns=[None] * 3)
 
@@ -206,12 +212,12 @@ def main(args, config):
     
     print("Start training")
     start_time = time.time()
-
+    iters = 0
     for epoch in range(0, max_epoch):
         if not args.evaluate:
             if args.distributed:
                 train_loader.sampler.set_epoch(epoch)
-            train_stats = train(
+            train_stats, iters = train(
                 model, 
                 train_loader, 
                 optimizer, 
@@ -221,7 +227,8 @@ def main(args, config):
                 device, 
                 lr_scheduler, 
                 config,
-                accumulation_steps) 
+                accumulation_steps,
+                iters,)
             
         val_stats = evaluate(model, val_loader, tokenizer, device, config)
         test_stats = evaluate(model, test_loader, tokenizer, device, config)
@@ -260,7 +267,7 @@ def main(args, config):
         
         if args.evaluate:
             break
-        lr_scheduler.step(epoch+warmup_steps+1)  
+        # lr_scheduler.step(epoch+warmup_steps+1)  
         dist.barrier()   
                 
     total_time = time.time() - start_time

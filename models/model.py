@@ -53,7 +53,7 @@ class ALBEF(nn.Module):
                     self.text_encoder.config.hidden_size, 
                     self.text_encoder.config.hidden_size
                   ),
-                  nn.Dropout(0.5),
+                  nn.Dropout(config['mlp_dropout']),
                   nn.ReLU(),
                   nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
                   nn.Linear(
@@ -85,7 +85,7 @@ class ALBEF(nn.Module):
                         self.text_encoder.config.hidden_size, 
                         self.text_encoder.config.hidden_size
                     ),
-                    nn.Dropout(0.5),
+                    nn.Dropout(config['mlp_dropout']),
                     nn.ReLU(),
                     nn.LayerNorm(self.text_encoder.config.hidden_size, eps=1e-6),
                     nn.Linear(

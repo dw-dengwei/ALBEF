@@ -17,17 +17,17 @@ accumulation_steps: 8
 
 optimizer: {
   opt: adamW, 
-  lr: 1e-5, 
-  weight_decay: 0.01
+  lr: 5e-5, 
+  weight_decay: 0.02
 }
 
 schedular: {
   sched: step, 
-  lr: 1e-5, 
+  lr: 5e-5, 
   epochs: 10,
   min_lr: 1e-6, 
   decay_rate: 0.9, 
-  decay_epochs: 1,
+  decay_epochs: 500,
   warmup_lr: 1e-6, 
   warmup_epochs: 0, 
   cooldown_epochs: 0
@@ -47,6 +47,7 @@ num_sents: 20
 cnn_kernel_num: 768
 cnn_kernel_size: 3
 
+mlp_dropout: 0.1
 
 pooling_num_words: 40
 pooling_num_patches: 577
