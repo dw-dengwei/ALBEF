@@ -64,6 +64,8 @@ def train(
         images, label = images.to(device,non_blocking=True), label.to(device,non_blocking=True)
         text_inputs = tokenizer(text, padding='longest', return_tensors="np")
         text_inputs = utils.split_words(text_inputs.input_ids, device)
+
+        # label = (1 - 0.1) * label + 0.1 / config['num_label']
         
         if epoch>0 or not config['warm_up']:
             alpha = config['alpha']
@@ -71,6 +73,7 @@ def train(
             alpha = config['alpha']*min(1,i/len(data_loader))
 
         prediction, loss = model(images, text_inputs, device=device, label=label, train=True, alpha=alpha)    
+        # loss = (loss - 1).abs() + 1
         # loss = loss / accumulation_steps 
         optimizer.zero_grad()
         with amp.scale_loss(loss, optimizer) as scaled_loss:

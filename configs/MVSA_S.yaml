@@ -54,3 +54,5 @@ pooling_num_patches: 50
 bert_tokenizer: bert-base-uncased
 
 max_image_num: 1
+
+mlp_dropout: 0.1

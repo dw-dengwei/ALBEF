@@ -8,7 +8,7 @@ image_res: 384
 batch_size_train: 8
 batch_size_test: 64 
 
-alpha: 0.4
+alpha: 0.8
 distill: True
 warm_up: False
 
@@ -18,13 +18,13 @@ accumulation_steps: 8
 optimizer: {
   opt: adamW, 
   lr: 5e-5, 
-  weight_decay: 0.02
+  weight_decay: 0.03
 }
 
 schedular: {
   sched: step, 
   lr: 5e-5, 
-  epochs: 10,
+  epochs: 30,
   min_lr: 1e-6, 
   decay_rate: 0.9, 
   decay_epochs: 500,
@@ -36,7 +36,7 @@ schedular: {
 num_label: 3
 
 # last_avg last_max first_last_avg first_last_max cls multi
-t_pooling: 'cls'
+t_pooling: 'first_last_cls'
 v_pooling: 'last_avg'
 fuse_pooling: 'cls'
 vit_depth: 12

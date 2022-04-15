@@ -10,6 +10,24 @@ import torch.nn.functional as F
 
 import numpy as np
 
+def CrossEntropyLoss_label_smooth(outputs, targets, num_classes=3, epsilon=0.3):
+    N = targets.size(0)
+    # torch.Size([8, 10])
+    # 初始化一个矩阵, 里面的值都是epsilon / (num_classes - 1)
+    smoothed_labels = torch.full(
+        size=(N, num_classes), 
+        fill_value=epsilon / (num_classes - 1)
+    ).to(targets.device)
+ 
+    targets = targets.data
+    # 为矩阵中的每一行的某个index的位置赋值为1 - epsilon
+    smoothed_labels.scatter_(dim=1, index=targets.unsqueeze(1), value=1 - epsilon)
+    # 调用torch的log_softmax
+    log_prob = nn.functional.log_softmax(outputs, dim=1)
+    # 用之前得到的smoothed_labels来调整log_prob中每个值
+    loss = - torch.sum(log_prob * smoothed_labels) / N
+    return loss
+
 class ALBEF(nn.Module):
     def __init__(self,                 
                  text_encoder = None,
@@ -122,13 +140,17 @@ class ALBEF(nn.Module):
                     output_fuse_m = self.get_fuse_feat(output_t_m, output_v_m, self.text_encoder_m)
                     prediction_m = self.mlp_m(output_fuse_m)
 
+                # loss = (1-alpha)*CrossEntropyLoss_label_smooth(logit, label) - alpha*torch.sum(
+                #     F.log_softmax(logit, dim=1)*F.softmax(prediction_m, dim=1),dim=1).mean()
                 loss = (1-alpha)*F.cross_entropy(logit, label) - alpha*torch.sum(
                     F.log_softmax(logit, dim=1)*F.softmax(prediction_m, dim=1),dim=1).mean()
             else:
+                # loss = CrossEntropyLoss_label_smooth(logit, label)                
                 loss = F.cross_entropy(logit, label)                
             return logit, loss 
             
         else:
+            # loss = CrossEntropyLoss_label_smooth(logit, label)                
             loss = F.cross_entropy(logit, label)                
             return logit, loss
  
@@ -215,6 +237,8 @@ class ALBEF(nn.Module):
             return (hidden_states[-1] + hidden_states[1]).mean(dim=1)
         elif method == 'first_last_max':
             return (hidden_states[-1] + hidden_states[1]).max(dim=1).values
+        elif method == 'first_last_cls':
+            return (hidden_states[-1] + hidden_states[1])[:, 0, :]
         elif method == 'cls':
             return hidden_states[-1][:, 0, :]
         elif method == 'cnn':
