@@ -2,9 +2,11 @@ data_root: '/home/docker/project/datasets/yelp'
 
 train_file: 'train.json'
 val_file: 'valid.json'                
-test_file: 'test.json'
+test_file: 'test/Boston_test.json'
+# test_file: 'test/Chicago_test.json'
+# test_file: 'test/Los Angeles_test.json'
+# test_file: 'test/New York_test.json'
 # test_file: 'test/San Francisco_test.json'
-#Boston_test.json   Chicago_test.json  'Los Angeles_test.json'  'New York_test.json'  'San Francisco_test.json
 
 
 image_res: 384
