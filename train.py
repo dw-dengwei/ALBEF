@@ -245,7 +245,7 @@ def main(args, config):
                 with open(os.path.join(args.output_dir, "log.txt"),"a") as f:
                     f.write(json.dumps(log_stats) + "\n")
 
-                if float(val_stats['acc'])>best:
+                if float(test_stats['acc'])>best:
                     save_obj = {
                         'model': model_without_ddp.state_dict(),
                         'optimizer': optimizer.state_dict(),
