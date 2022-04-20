@@ -151,7 +151,7 @@ def main(args, config):
         is_trains=[True,False,False], 
         collate_fns=[None] * 3)
 
-    tokenizer = BertTokenizer.from_pretrained(args.text_encoder)
+    tokenizer = BertTokenizer.from_pretrained('/home/docker/.cache/huggingface/tokenizer')
 
     #### Model #### 
     print("Creating model")

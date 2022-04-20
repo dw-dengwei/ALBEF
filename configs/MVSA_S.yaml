@@ -37,9 +37,9 @@ schedular: {
 num_label: 3
 
 # last_avg last_max first_last_avg first_last_max cls multi
-t_pooling: 'cls'
+t_pooling: 'first_last_avg'
 v_pooling: 'last_avg'
-fuse_pooling: 'cls'
+fuse_pooling: 'first_last_avg'
 vit_depth: 12
 vit_heads: 12
 vit_dropout: 0.1
@@ -54,3 +54,5 @@ pooling_num_patches: 50
 bert_tokenizer: bert-base-uncased
 
 max_image_num: 1
+
+n_components: 256

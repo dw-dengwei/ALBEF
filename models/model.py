@@ -10,6 +10,16 @@ import torch.nn.functional as F
 
 import numpy as np
 
+import pickle
+
+def load_whiten(path):
+    with open(path, 'rb') as f:
+        whiten = pickle.load(f)
+    kernel = whiten['kernel']
+    bias = whiten['bias']
+    return kernel, bias
+
+
 class ALBEF(nn.Module):
     def __init__(self,                 
                  text_encoder = None,
@@ -32,6 +42,13 @@ class ALBEF(nn.Module):
         self.pooling_num_words = config['pooling_num_words']
         self.pooling_num_patches = config['pooling_num_patches']
 
+        self.n_components = config['n_components']
+
+        self.kernel, self.bias = load_whiten('save/whiten.pkl')
+        self.kernel = self.kernel[:, :self.n_components]
+        self.kernel = torch.tensor(self.kernel, requires_grad=False, dtype=torch.float16)
+        self.bias = torch.tensor(self.bias, requires_grad=False, dtype=torch.float16)
+
         self.visual_encoder = VisionTransformer(
             img_size=config['image_res'], 
             patch_size=16, 
@@ -47,7 +64,6 @@ class ALBEF(nn.Module):
         bert_config = BertConfig.from_json_file(config['bert_config'])
 
         self.text_encoder = BertModel.from_pretrained(text_encoder, config=bert_config, add_pooling_layer=False)
-
         self.mlp = nn.Sequential(
                   nn.Linear(
                     self.text_encoder.config.hidden_size, 
@@ -61,11 +77,6 @@ class ALBEF(nn.Module):
                         config['num_label']
                     )
                 )
-        self.kernel = nn.Conv2d(
-            1, 
-            self.kernel_num,
-            (self.kernel_size, bert_config.hidden_size)
-            )
 
         if self.distill:
             self.visual_encoder_m = VisionTransformer(
@@ -93,23 +104,18 @@ class ALBEF(nn.Module):
                         config['num_label']
                     )
             )
-            self.kernel_m = nn.Conv2d(
-                1, 
-                self.kernel_num,
-                (self.kernel_size, bert_config.hidden_size)
-                )
 
             self.model_pairs = [[self.visual_encoder,self.visual_encoder_m],
                                 [self.text_encoder,self.text_encoder_m],
                                 [self.mlp,self.mlp_m],
-                                [self.kernel, self.kernel_m],
+                                # [self.kernel, self.kernel_m],
                                ]
             self.copy_params()        
             self.momentum = 0.995
          
 
     def forward(self, image, text, label, device, alpha=0, train=True):
-        output_t = self.get_t_feat(text, device, self.text_encoder, self.kernel)
+        output_t = self.get_t_feat(text, device, self.text_encoder)
         output_v = self.get_v_feat(image, device, self.visual_encoder)
         output_fuse = self.get_fuse_feat(output_t, output_v, self.text_encoder)
         logit = self.mlp(output_fuse)
@@ -117,7 +123,7 @@ class ALBEF(nn.Module):
             if self.distill:                
                 with torch.no_grad():
                     self._momentum_update()
-                    output_t_m = self.get_t_feat(text, device, self.text_encoder_m, self.kernel_m)
+                    output_t_m = self.get_t_feat(text, device, self.text_encoder_m)
                     output_v_m = self.get_v_feat(image, device, self.visual_encoder_m)
                     output_fuse_m = self.get_fuse_feat(output_t_m, output_v_m, self.text_encoder_m)
                     prediction_m = self.mlp_m(output_fuse_m)
@@ -148,7 +154,9 @@ class ALBEF(nn.Module):
                 param_m.data = param_m.data * self.momentum + param.data * (1. - self.momentum)
 
 
-    def get_t_feat(self, inputs, device, encoder, kernel):
+    def get_t_feat(self, inputs, device, encoder):
+        kernel = self.kernel.to(device)
+        bias = self.bias.to(device)
         bs = len(inputs)
         b = []
         num_max_sent = 0
@@ -164,6 +172,8 @@ class ALBEF(nn.Module):
                 output_hidden_states=True,
             )
             sent_feat = self.pooling(output, self.t_pooling_met, kernel)
+            sent_feat = (sent_feat + bias).matmul(kernel)
+            sent_feat = F.pad(input=sent_feat, pad=(0, 768 - 256, 0, 0), mode='constant', value=0)
             b.append(sent_feat)
             num_max_sent = max(num_max_sent, sent_feat.size(0))
         ret = torch.zeros(
@@ -231,9 +241,9 @@ class ALBEF(nn.Module):
 
     def v_pooling(self, hidden_states, method):
         if method == 'last_avg':
-            return hidden_states.mean(dim=0)
+            return hidden_states.mean(dim=1)
         elif method == 'last_max':
-            return hidden_states.max(dim=0).values
+            return hidden_states.max(dim=1).values
         elif method == 'cls':
             return hidden_states[:, 0, :]
         elif method == 'multi':
