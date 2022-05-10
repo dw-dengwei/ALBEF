@@ -172,8 +172,9 @@ class ALBEF(nn.Module):
                 output_hidden_states=True,
             )
             sent_feat = self.pooling(output, self.t_pooling_met, kernel)
-            sent_feat = (sent_feat + bias).matmul(kernel)
-            sent_feat = F.pad(input=sent_feat, pad=(0, 768 - self.n_components, 0, 0), mode='constant', value=0)
+            if self.n_components != -1:
+                sent_feat = (sent_feat + bias).matmul(kernel)
+                sent_feat = F.pad(input=sent_feat, pad=(0, 768 - self.n_components, 0, 0), mode='constant', value=0)
             b.append(sent_feat)
             num_max_sent = max(num_max_sent, sent_feat.size(0))
         ret = torch.zeros(
