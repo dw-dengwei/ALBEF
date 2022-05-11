@@ -11,7 +11,7 @@ test_file: 'test.json'
 
 
 image_res: 384
-batch_size_train: 4
+batch_size_train: 12
 batch_size_test: 64 
 
 alpha: 0.4

@@ -160,33 +160,45 @@ class ALBEF(nn.Module):
         bs = len(inputs)
         b = []
         num_max_sent = 0
-        for i in range(bs):
-            sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:self.config_max_sents]
-            att_mask = torch.ones(sents.shape, dtype=torch.long).to(device)
-            # list of #sents * #words * feature_size
+        if self.config_max_sents != 1:
+            for i in range(bs):
+                sents = torch.tensor(inputs[i], dtype=torch.long).to(device)[:self.config_max_sents]
+                att_mask = torch.ones(sents.shape, dtype=torch.long).to(device)
+                # list of #sents * #words * feature_size
+                output = encoder(
+                    sents,
+                    attention_mask=att_mask,
+                    return_dict=True,
+                    mode='text',
+                    output_hidden_states=True,
+                )
+                sent_feat = self.pooling(output, self.t_pooling_met, kernel)
+                if self.n_components != -1:
+                    sent_feat = (sent_feat + bias).matmul(kernel)
+                    sent_feat = F.pad(input=sent_feat, pad=(0, 768 - self.n_components, 0, 0), mode='constant', value=0)
+                b.append(sent_feat)
+                num_max_sent = max(num_max_sent, sent_feat.size(0))
+            ret = torch.zeros(
+                bs, 
+                num_max_sent, 
+                self.text_encoder.config.hidden_size, 
+                dtype=torch.float
+            ).to(device)
+
+            for i in range(bs):
+                ret[i][:b[i].size(0)] = b[i]
+            return ret
+        else:
+            inputs = inputs.to(device)
             output = encoder(
-                sents,
-                attention_mask=att_mask,
+                inputs.input_ids[:, :510], 
+                attention_mask=inputs.attention_mask[:, :510],
                 return_dict=True,
                 mode='text',
                 output_hidden_states=True,
             )
-            sent_feat = self.pooling(output, self.t_pooling_met, kernel)
-            if self.n_components != -1:
-                sent_feat = (sent_feat + bias).matmul(kernel)
-                sent_feat = F.pad(input=sent_feat, pad=(0, 768 - self.n_components, 0, 0), mode='constant', value=0)
-            b.append(sent_feat)
-            num_max_sent = max(num_max_sent, sent_feat.size(0))
-        ret = torch.zeros(
-            bs, 
-            num_max_sent, 
-            self.text_encoder.config.hidden_size, 
-            dtype=torch.float
-        ).to(device)
-
-        for i in range(bs):
-            ret[i][:b[i].size(0)] = b[i]
-        return ret
+            feat = self.pooling(output, self.t_pooling_met, None).unsqueeze(1)
+            return feat
     
 
     def get_v_feat(self, inputs, device, encoder):
