@@ -42,13 +42,13 @@ schedular: {
 num_label: 5
 
 # last_avg last_max first_last_avg first_last_max cls multi
-t_pooling: 'multi'
-v_pooling: 'multi'
-fuse_pooling: 'cls'
+t_pooling: 'first_last_avg'
+v_pooling: 'last_avg'
+fuse_pooling: 'first_last_avg'
 vit_depth: 4
 vit_heads: 12
 vit_dropout: 0.5
-num_sents: 20
+num_sents: 1
 
 cnn_kernel_num: 768
 cnn_kernel_size: 3
@@ -56,8 +56,7 @@ cnn_kernel_size: 3
 pooling_num_words: 5
 pooling_num_patches: 2
 
-pooling_num_words: 1
-pooling_num_patches: 50
+n_components: -1
 
 bert_tokenizer: bert-base-uncased
 

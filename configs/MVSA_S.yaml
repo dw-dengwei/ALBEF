@@ -55,4 +55,4 @@ bert_tokenizer: bert-base-uncased
 
 max_image_num: 1
 
-n_components: 128
+n_components: -1
