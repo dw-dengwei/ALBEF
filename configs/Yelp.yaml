@@ -2,16 +2,17 @@ data_root: '/home/docker/project/datasets/yelp'
 
 train_file: 'train.json'
 val_file: 'valid.json'                
-test_file: 'test.json'
+# test_file: 'test.json'
 # test_file: 'test/Chicago_test.json'
 # test_file: 'test/Los Angeles_test.json'
 # test_file: 'test/New York_test.json'
 # test_file: 'test/San Francisco_test.json'
+test_file: 'test/Avg.json'
 #Boston_test.json   Chicago_test.json  'Los Angeles_test.json'  'New York_test.json'  'San Francisco_test.json
 
 
 image_res: 384
-batch_size_train: 12
+batch_size_train: 4
 batch_size_test: 64 
 
 alpha: 0.4
@@ -48,7 +49,7 @@ fuse_pooling: 'first_last_avg'
 vit_depth: 4
 vit_heads: 12
 vit_dropout: 0.5
-num_sents: 1
+num_sents: 20
 
 cnn_kernel_num: 768
 cnn_kernel_size: 3
@@ -56,7 +57,7 @@ cnn_kernel_size: 3
 pooling_num_words: 5
 pooling_num_patches: 2
 
-n_components: -1
+n_components: 256
 
 bert_tokenizer: bert-base-uncased
 

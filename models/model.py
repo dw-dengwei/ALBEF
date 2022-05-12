@@ -198,6 +198,9 @@ class ALBEF(nn.Module):
                 output_hidden_states=True,
             )
             feat = self.pooling(output, self.t_pooling_met, None).unsqueeze(1)
+            if self.n_components != -1:
+                feat = (feat + bias).matmul(kernel)
+                feat = F.pad(input=feat, pad=(0, 768 - self.n_components, 0, 0), mode='constant', value=0)
             return feat
     
 
