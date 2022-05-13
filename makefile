@@ -5,3 +5,5 @@ train:
 test:
 	python -m torch.distributed.launch --nproc_per_node=$(GPUS) --use_env train.py -- --dataset=$(DATASET) \
 	--checkpoint='output/$(DATASET)/checkpoint_best.pth' --dataset=$(DATASET) --evaluate
+vis:
+	python visual.py --dataset=$(DATASET) --checkpoint='output/$(DATASET)/checkpoint_best.pth' --dataset=$(DATASET) --evaluate --distributed False
