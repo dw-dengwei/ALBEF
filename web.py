@@ -1,14 +1,11 @@
 import argparse
-from email.mime import image
 import os
+from tkinter import N
 import ruamel_yaml as yaml
-import numpy as np
 import re
 from torchvision import transforms
 from flask import Flask, request
 import re, nltk
-from nltk.corpus import stopwords
-from nltk.stem.wordnet import WordNetLemmatizer
 
 import torch
 
@@ -52,17 +49,18 @@ class preprocess:
 
     def _pre(self, text):
         words = nltk.tokenize.word_tokenize(text)
-        # words = [w for w in words if w not in stopwords.words('english')]
-        # words = [WordNetLemmatizer().lemmatize(w) for w in words]
-        return ' '.join(words)
+        return words
 
     def _sep(self, text):
-        pattern = re.compile('.{100}')
-        text = '[SEP]'.join(pattern.findall(text))
-        if text[-5:] != '[SEP]':
-            return text + '[SEP]'
-        else:
-            return text
+        n = 100
+        i = n
+        while i < len(text):
+            text.insert(i, '[SEP]')
+            i += (n + 1)
+        if text[-1] != '[SEP]':
+            text = text + ['[SEP]']
+        text = ['[CLS]'] + text
+        return ' '.join(text)
 
     def forward_text(self, text: str) -> str: 
         text = self._clean(text)
@@ -85,11 +83,12 @@ def predict(model, tokenizer, device, images, text):
     text_inputs = tokenizer(text, padding='longest', return_tensors="np")  
     text_inputs = utils.split_words(text_inputs.input_ids, device)
 
+    print(text, images.size(), sep='\t')
     prediction = model(images, text_inputs, device=device, label=None, train=False)  
 
     _, pred_class = prediction.max(1)
 
-    return pred_class
+    return pred_class, prediction.tolist()
     
 
 def env(args, config):
@@ -119,14 +118,20 @@ app = Flask(__name__)
 @app.route('/', methods=['POST'])
 def controller():
     global device, tokenizer, model, pre
-    text = request.form.get('text')
+    text = request.form.get('text').encode('utf-8', 
+    errors='ignore').decode('utf-8')
+    ori_text = text
     text = pre.forward_text(text)
     img_buf = request.files['image'].read()
     img = Image.open(BytesIO(img_buf))
     img = pre.forward_image(img)
 
     with torch.no_grad():
-        pred = predict(model, tokenizer, device, img, text)
+        pred, logit = predict(model, tokenizer, device, img, text)
+    print({
+        "prediction": str(pred.tolist()[0]),
+        "probability": logit
+    })
     return str(pred.tolist()[0])
     
 if __name__ == '__main__':

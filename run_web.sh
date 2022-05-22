@@ -1,1 +1,1 @@
-python web.py --dataset=MVSA_S --checkpoint='output/MVSA_S/final.pth'
+python web.py --dataset=MVSA_M --checkpoint='output/MVSA_M/final.pth'

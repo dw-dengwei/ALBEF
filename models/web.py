@@ -135,7 +135,7 @@ class ALBEF(nn.Module):
             return logit, loss 
             
         else:
-            return logit
+            return F.softmax(logit)
  
 
     @torch.no_grad()    
