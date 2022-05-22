@@ -1,4 +1,5 @@
 import argparse
+from email.mime import image
 import os
 import ruamel_yaml as yaml
 import numpy as np
@@ -8,11 +9,10 @@ from flask import Flask, request
 import re, nltk
 from nltk.corpus import stopwords
 from nltk.stem.wordnet import WordNetLemmatizer
-from tokenizers import Tokenizer
 
 import torch
 
-from models.visual import ALBEF
+from models.web import ALBEF
 from models.vit import interpolate_pos_embed
 from models.tokenization_bert import BertTokenizer
 from PIL import Image
@@ -52,8 +52,8 @@ class preprocess:
 
     def _pre(self, text):
         words = nltk.tokenize.word_tokenize(text)
-        words = [w for w in words if w not in stopwords.words('english')]
-        words = [WordNetLemmatizer().lemmatize(w) for w in words]
+        # words = [w for w in words if w not in stopwords.words('english')]
+        # words = [WordNetLemmatizer().lemmatize(w) for w in words]
         return ' '.join(words)
 
     def _sep(self, text):
@@ -72,19 +72,20 @@ class preprocess:
 
     def forward_image(self, image: Image.Image) -> Image.Image:
         image = image.convert('RGB')
-        return self._test_transform(image)
+        return self._test_transform(image).unsqueeze(0)
     
 
 @torch.no_grad()
 def predict(model, tokenizer, device, images, text):
     # test
     model.eval()
-    images, targets = images.to(device,non_blocking=True), targets.to(device,non_blocking=True)   
+    images = images.to(device,non_blocking=True).unsqueeze(0)
+    text = [text]
     
     text_inputs = tokenizer(text, padding='longest', return_tensors="np")  
     text_inputs = utils.split_words(text_inputs.input_ids, device)
 
-    prediction, loss, feat = model(images, text_inputs, device=device, label=targets, train=False)  
+    prediction = model(images, text_inputs, device=device, label=None, train=False)  
 
     _, pred_class = prediction.max(1)
 
@@ -108,7 +109,7 @@ def env(args, config):
     
     msg = model.load_state_dict(state_dict,strict=False)
     print('Load Checkpoint Finished!')
-    model = model.to(device)   
+    # model = model.to(device)   
 
     pre = preprocess(config)
     return device, tokenizer, model, pre
@@ -124,6 +125,9 @@ def controller():
     img = Image.open(BytesIO(img_buf))
     img = pre.forward_image(img)
 
+    with torch.no_grad():
+        pred = predict(model, tokenizer, device, img, text)
+    return str(pred.tolist()[0])
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -141,6 +145,6 @@ if __name__ == '__main__':
     args.text_encoder = config['bert_tokenizer']
 
     global device, tokenizer, model, pre
-    deivce, tokenizer, model, pre = env(args, config)
+    device, tokenizer, model, pre = env(args, config)
     print('Environment Prepaired!')
     app.run(host='0.0.0.0', port=12333)
