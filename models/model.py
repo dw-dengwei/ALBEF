@@ -117,8 +117,8 @@ class ALBEF(nn.Module):
     def forward(self, image, text, label, device, alpha=0, train=True):
         output_t = self.get_t_feat(text, device, self.text_encoder)
         output_v = self.get_v_feat(image, device, self.visual_encoder)
-        output_fuse = torch.cat((output_t, output_v), dim=1).mean(1)
-        #output_fuse = self.get_fuse_feat(output_t, output_v, self.text_encoder)
+        #output_fuse = torch.cat((output_t, output_v), dim=1).mean(1)
+        output_fuse = self.get_fuse_feat(output_t, output_v, self.text_encoder)
         logit = self.mlp(output_fuse)
         if train:
             if self.distill:                
@@ -126,8 +126,8 @@ class ALBEF(nn.Module):
                     self._momentum_update()
                     output_t_m = self.get_t_feat(text, device, self.text_encoder_m)
                     output_v_m = self.get_v_feat(image, device, self.visual_encoder_m)
-                    #output_fuse_m = self.get_fuse_feat(output_t_m, output_v_m, self.text_encoder_m)
-                    output_fuse_m = torch.cat((output_t_m, output_v_m), dim=1).mean(1)
+                    output_fuse_m = self.get_fuse_feat(output_t_m, output_v_m, self.text_encoder_m)
+                    #output_fuse_m = torch.cat((output_t_m, output_v_m), dim=1).mean(1)
                     prediction_m = self.mlp_m(output_fuse_m)
 
                 loss = (1-alpha)*F.cross_entropy(logit, label) - alpha*torch.sum(

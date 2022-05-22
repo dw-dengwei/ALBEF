@@ -249,8 +249,23 @@ def main(args, config):
     label_s = torch.cat(label_s)
     print(feat_s.size())
     print(label_s.size())
-    np.save("output/feature.npy", feat_s.data.cpu().numpy())
-    np.save("output/label.npy", label_s.data.cpu().numpy())
+    #np.save("output/BO_feat.npy", feat_s.data.cpu().numpy())
+    #np.save("output/BO_label.npy", label_s.data.cpu().numpy())
+    
+    #np.save("output/CH_feat.npy", feat_s.data.cpu().numpy())
+    #np.save("output/CH_label.npy", label_s.data.cpu().numpy())
+    
+    #np.save("output/LA_feat.npy", feat_s.data.cpu().numpy())
+    #np.save("output/LA_label.npy", label_s.data.cpu().numpy())
+    
+    #np.save("output/NY_feat.npy", feat_s.data.cpu().numpy())
+    #np.save("output/NY_label.npy", label_s.data.cpu().numpy())
+    
+    # np.save("output/SF_feat.npy", feat_s.data.cpu().numpy())
+    # np.save("output/SF_label.npy", label_s.data.cpu().numpy())
+    
+    np.save("output/AVG_feat.npy", feat_s.data.cpu().numpy())
+    np.save("output/AVG_label.npy", label_s.data.cpu().numpy())
     
     if utils.is_main_process():   
         with open(os.path.join(args.output_dir, "log.txt"),"a") as f:
