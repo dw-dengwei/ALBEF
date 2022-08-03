@@ -94,7 +94,9 @@ def predict(model, tokenizer, device, images, text):
 def env(args, config):
     print('Loading...')
     device = torch.device('cpu')
-    tokenizer = BertTokenizer.from_pretrained('/home/docker/.cache/huggingface/tokenizer')
+    # print(os.getcwd(), args.checkpoint)
+    # tokenizer = BertTokenizer.from_pretrained('/home/docker/.cache/huggingface/tokenizer')
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     model = ALBEF(args.text_encoder, tokenizer, config)
     checkpoint = torch.load(args.checkpoint, map_location='cpu') 
     state_dict = checkpoint['model']
@@ -152,4 +154,4 @@ if __name__ == '__main__':
     global device, tokenizer, model, pre
     device, tokenizer, model, pre = env(args, config)
     print('Environment Prepaired!')
-    app.run(host='0.0.0.0', port=12333)
+    app.run(host='0.0.0.0', port=22333)
