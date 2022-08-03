@@ -2,3 +2,4 @@
 *.pth
 save/*
 output/*
+.vscode/*
